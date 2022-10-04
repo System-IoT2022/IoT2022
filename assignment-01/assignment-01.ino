@@ -7,6 +7,7 @@ void setup() {
 }
 void wake(){
   state = 1;
+  sleep_disable();
 } 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -19,6 +20,10 @@ void loop() {
     // code block
       break;
     default://sleepmode
+    interrupts();
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sleep_mode();
     // create new sequence
     //
   }
