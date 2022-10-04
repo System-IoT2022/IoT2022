@@ -12,6 +12,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   switch(state) {
     case 1://initial state
+      noInterrupts();
     // code block
       break;
     case 2:
