@@ -1,13 +1,26 @@
 #include <avr/sleep.h>
 #include <math.h>
+//#include "TimerOne.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
-short int state;
-int led[4];
-int button[4];
+
+//arduino environment
+int ledPins[NLED];
+int redLedPin;
+int buttonPins[NLED];
+int potentiometerPin;
+
+//game settings
+short int gameState;
 int score = 0;
 int penalty = 0;
+
+//game logics
+int redLed;
+int buttonStates[NLED];
+int ledStates[NLED];
 int sequence[NLED];
+int potentiometer;
 
 
 
@@ -15,17 +28,39 @@ void setup() {
   // put your setup code here, to run once:
   attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wake, RISING);
   for (int i = 0; i < NLED; i++) {
-    led[i] = 10 + i;
-    button[i] = 5 + i;
+    ledPins[i] = 10 + i;
+    buttonPins[i] = 5 + i;
+    pinMode(buttonPins[i], INPUT);
+    pinMode(ledPins[i], OUTPUT);
   }
+  redLedPin = 9;
+  pinMode(redLedPin, OUTPUT);
+  Serial.begin(9600);
+  //Timer1.initialize(1000000); 
 }
 void wake() {
-  state = 1;
+  gameState = 1;
   sleep_disable();
 }
+
+void polling(){
+  //read inputs including: buttons, potentionmeter
+    for(int i = 0; i < NLED; i++){
+      buttonStates[i] = digitalRead(buttonPins[i]);
+    }
+    //potentiometer = digitalRead(potentiometerPin);
+}
+
+void updateStates(){
+  for(int i = 0; i < NLED; i++){
+      uint8_t value = ledPins[i] == 0 ? LOW : HIGH;
+      digitalWrite(ledPins[i], value);
+  }
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
-  switch (state) {
+  switch (gameState) {
     case 1:  //initial state
       noInterrupts();
 
@@ -39,7 +74,7 @@ void loop() {
         } else {
 
           newSequence();  // new sequence list
-          state = 3;
+          gameState = 3;
         }
       }
 
