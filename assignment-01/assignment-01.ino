@@ -34,7 +34,6 @@ void gameStart(){
   score = 0;
   penalty = 0;
   gameState = 2;
-  time_now = millis();
 }
 
 
@@ -93,21 +92,17 @@ void checkPenalty(){
         }
       }
 }
-/*1: restarted game
-  2: waiting user
-  3: game starts
-  sleeping mode*/
+
 void loop() {
-  // put your main code here, to run repeatedly:
   polling();
   switch (gameState) {
     case 1:  //initial state
       noInterrupts();
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+      time_now = millis();
       gameState = 2;
       break;
-    case 2:  
-     //wait for 10 seconds
+    case 2:  //wait interaction from the user for 10 seconds
       if(millis() < time_now + T1){
         redLedFading();
         if(buttonStates[0] == HIGH){
@@ -118,8 +113,15 @@ void loop() {
         gameState = SLEEPMODE;
       }
       break;
-    case 3:
-    //ligh up led for game start
+    case 3: //Game starts!
+      
+      gameStart();
+      serial.println("GO");
+      gameState = 4;
+      break;
+    case 4: //during game
+
+      break;
     default:  //sleepmode
       interrupts();
       set_sleep_mode(SLEEP_MODE_PWR_DOWN);
