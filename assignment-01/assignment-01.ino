@@ -3,12 +3,16 @@
 //#include "TimerOne.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
+#define SLEEPMODE 1000
+#define T1 10
 
 //arduino environment
 int ledPins[NLED];
 int redLedPin;
 int buttonPins[NLED];
 int potentiometerPin;
+unsigned long time_now;
+
 
 //game settings
 short int gameState;
@@ -21,6 +25,17 @@ int buttonStates[NLED];
 int ledStates[NLED];
 int sequence[NLED];
 int potentiometer;
+
+void gameStart(){
+  for(int i = 0; i < NLED; i++){
+    ledStates[i] = 0;
+    sequence[i] = 0;
+  }
+  score = 0;
+  penalty = 0;
+  gameState = 2;
+  time_now = millis();
+}
 
 
 
@@ -51,18 +66,18 @@ void polling(){
     //potentiometer = digitalRead(potentiometerPin);
 }
 
-void updateStates(){
+void updateLedStates(){
   for(int i = 0; i < NLED; i++){
       uint8_t value = ledPins[i] == 0 ? LOW : HIGH;
       digitalWrite(ledPins[i], value);
   }
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  switch (gameState) {
-    case 1:  //initial state
-      noInterrupts();
+void redLedFading(){
+
+}
+
+void checkPenalty(){
 
       if (penalty == 0) {
         //check start game
@@ -77,12 +92,31 @@ void loop() {
           gameState = 3;
         }
       }
-
+}
+/*1: restarted game
+  2: waiting user
+  3: game starts
+  sleeping mode*/
+void loop() {
+  // put your main code here, to run repeatedly:
+  polling();
+  switch (gameState) {
+    case 1:  //initial state
+      noInterrupts();
+      Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+      gameState = 2;
       break;
-    case 2:  //in game
-             // code block
-             //check sequence from button
-             //ligh led up
+    case 2:  
+     //wait for 10 seconds
+      if(millis() < time_now + T1){
+        redLedFading();
+        if(buttonStates[0] == HIGH){
+          gameState = 3;
+        }
+        
+      }else{ /*after 10 secodns, go deep sleep mode.*/
+        gameState = SLEEPMODE;
+      }
       break;
     case 3:
     //ligh up led for game start
@@ -91,8 +125,12 @@ void loop() {
       set_sleep_mode(SLEEP_MODE_PWR_DOWN);
       sleep_enable();
       sleep_mode();
-      // create new sequence
-      //
+      /*during deep sleeping mode*/
+      
+      /** The program will continue from here. **/
+      Serial.println("WAKE UP");
+      /* First thing to do is disable sleep. */
+      wake();
   }
 }
 void newSequence() {
