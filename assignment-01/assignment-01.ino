@@ -4,7 +4,8 @@
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
 #define SLEEPMODE 1000
-#define T1 10
+#define WAITING_TIME 10000
+#define T1 3000
 
 //arduino environment
 int ledPins[NLED];
@@ -26,14 +27,22 @@ int ledStates[NLED];
 int sequence[NLED];
 int potentiometer;
 
+/*initializing for game onset*/
 void gameStart(){
   for(int i = 0; i < NLED; i++){
-    ledStates[i] = 0;
     sequence[i] = 0;
   }
+  turnOffLeds();
   score = 0;
   penalty = 0;
   gameState = 2;
+}
+/*turn off all lights*/
+void turnOffLeds(){
+  for(int i = 0; i < NLED; i++){
+    ledStates[i] = 0;
+    redLed = 0;
+  }
 }
 
 
@@ -52,26 +61,35 @@ void setup() {
   Serial.begin(9600);
   //Timer1.initialize(1000000); 
 }
+/*wake up the system during interrupts*/
 void wake() {
   gameState = 1;
   sleep_disable();
 }
 
+  /*read inputs including: buttons, potentionmeter*/
 void polling(){
-  //read inputs including: buttons, potentionmeter
     for(int i = 0; i < NLED; i++){
       buttonStates[i] = digitalRead(buttonPins[i]);
     }
     //potentiometer = digitalRead(potentiometerPin);
 }
-
+/*update the light based on the states*/
 void updateLedStates(){
   for(int i = 0; i < NLED; i++){
       uint8_t value = ledPins[i] == 0 ? LOW : HIGH;
       digitalWrite(ledPins[i], value);
   }
 }
+/*sets the light states*/
+void turnOnLights(int sequence[NLED]){
 
+}
+/*a new sequence used for turning on lights*/
+void createNewSequence(int sequence[NLED]){
+
+}
+/* the functions does analog write from 0 to 255 */
 void redLedFading(){
 
 }
@@ -103,7 +121,7 @@ void loop() {
       gameState = 2;
       break;
     case 2:  //wait interaction from the user for 10 seconds
-      if(millis() < time_now + T1){
+      if(millis() < time_now + WAITING_TIME){
         redLedFading();
         if(buttonStates[0] == HIGH){
           gameState = 3;
@@ -116,10 +134,13 @@ void loop() {
     case 3: //Game starts!
       
       gameStart();
-      serial.println("GO");
+      Serial.println("GO");
       gameState = 4;
       break;
     case 4: //during game
+      turnOffLeds();
+      delay(random(T1));
+      createNewSequence();
 
       break;
     default:  //sleepmode
