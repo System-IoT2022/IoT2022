@@ -6,6 +6,9 @@
 #define SLEEPMODE 1000
 #define WAITING_TIME 10000
 #define T1 3000
+#define T2 3000
+#define T3 5000
+#define GAME_REWARD 10
 
 //arduino environment
 int ledPins[NLED];
@@ -93,6 +96,11 @@ void createNewSequence(int sequence[NLED]){
 void redLedFading(){
 
 }
+/*check whether the user was able to recreate the lighting sequence*/
+bool wereUserInputsCorrect(){
+
+}
+
 
 void checkPenalty(){
 
@@ -111,6 +119,10 @@ void checkPenalty(){
       }
 }
 
+//here i should apply penalty to user when he touches any buttons
+void applayPenaltyToUserForAnyInputs(){
+
+}
 void loop() {
   polling();
   switch (gameState) {
@@ -137,10 +149,39 @@ void loop() {
       Serial.println("GO");
       gameState = 4;
       break;
-    case 4: //during game
+    case 4: //during game{showing patterns}
+      //wait a bit for T1 milliseconds
       turnOffLeds();
       delay(random(T1));
-      createNewSequence();
+      //show tricks  for T2 milliseconds
+      createNewSequence(sequence);
+      turnOnLights(sequence);
+      delay(random(T2)); 
+      applayPenaltyToUserForAnyInputs();
+      time_now = millis();
+      gameState = 5;
+      break;
+    case 5: //during game{user inputs}
+      //input time for T3 milliseconds
+      turnOffLeds();
+      if(millis < time_now + T3){
+        // do nothing, waiting user to finish inputs
+      }else{
+        //exsamination of the inputs
+        if(wereUserInputsCorrect()){
+          score += GAME_REWARD;
+          Serial.println(String("New point! Score: ") + score);
+        }else{
+          penalty += 1;
+          Serial.println("Penalty!");
+          digitalWrite(redLedPin, HIGH);
+          delay(1000);
+          if(Penalty == 3){
+            Serial.println(String("Game Over. Final Score: ") + score);
+            gameState = 1;
+          }
+        }
+      }
 
       break;
     default:  //sleepmode
