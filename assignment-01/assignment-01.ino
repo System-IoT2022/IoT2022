@@ -35,6 +35,7 @@ void loop() {
       break;
     case 2:
     // code block
+    
       break;
     default://sleepmode
     interrupts();
