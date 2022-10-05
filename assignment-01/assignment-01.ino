@@ -178,7 +178,7 @@ void loop() {
           delay(1000);
           if(Penalty == 3){
             Serial.println(String("Game Over. Final Score: ") + score);
-            gameState = 1;
+            gameState = 1;  
           }
         }
       }
