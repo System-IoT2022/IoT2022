@@ -1,17 +1,22 @@
 #include <avr/sleep.h>
+#include <math.h>
 #define WAKE_UP_PIN 2//external button for waking systems
+#define NLED 4
 short int state;
 int led[4];
 int button[4];
 int score = 0;
 int penalty = 0;
-LinkedPointerList adasjf = new LinkedPointerList();
+int sequence[NLED];
+
+
+
 void setup() {
   // put your setup code here, to run once:
   attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wake, RISING); 
-  for(int i=0;i<4;i++){
+  for(int i=0;i<NLED;i++){
       led[i]=10+i;
-      button[i]=6+i;
+      button[i]=5+i;
   }
 
 }
@@ -26,7 +31,7 @@ void loop() {
     case 1://initial state
       noInterrupts();
     // new sequence list
-
+      newSequence();
       break;
     case 2:
     // code block
@@ -40,4 +45,9 @@ void loop() {
     //
   }
 
+}
+void newSequence(){
+  for(int i=0;i<NLED;i++){
+    sequence[i]= rand()*NLED;
+  }
 }
