@@ -176,7 +176,7 @@ void loop() {
           Serial.println("Penalty!");
           digitalWrite(redLedPin, HIGH);
           delay(1000);
-          if(Penalty == 3){
+          if(penalty == 3){
             Serial.println(String("Game Over. Final Score: ") + score);
             gameState = 1;  
           }
