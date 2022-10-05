@@ -1,9 +1,11 @@
 #include <avr/sleep.h>
-
 #define WAKE_UP_PIN 2//external button for waking systems
 short int state;
 int led[4];
 int button[4];
+int score = 0;
+int penalty = 0;
+LinkedPointerList adasjf = new LinkedPointerList();
 void setup() {
   // put your setup code here, to run once:
   attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wake, RISING); 
@@ -11,6 +13,7 @@ void setup() {
       led[i]=10+i;
       button[i]=6+i;
   }
+
 }
 void wake(){
   state = 1;
