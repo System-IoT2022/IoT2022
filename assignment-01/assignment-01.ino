@@ -26,6 +26,7 @@ int buttonPins[NLED];
 int potentiometerPin;
 unsigned long time_now;
 unsigned long lastPress = 0;
+boolean interruptStatePressed;
 
 //game settings
 short int gameState;
@@ -53,7 +54,7 @@ void setup() {
     pinMode(buttonPins[i], INPUT);
     pinMode(ledPins[i], OUTPUT);
   }
-
+  interruptStatePressed = false;
   redIntensity = 0;
   pinMode(redLedPin, OUTPUT);
   Serial.begin(115200);
@@ -223,19 +224,20 @@ void configureDistinct() {  // distinct button are recognized when pressed
     pinMode(buttonPins[i], INPUT_PULLUP);
   }
 }
-void press() {                       // ISR DA SISTEMARE
-  /*
-  if (millis() - lastPress < 200) {  // Debounce
-    return;
-  }
-  lastPress = millis();
-  */
-
-  //configureDistinct();  // Setup pins for testing individual buttons
-  if (!digitalRead(WAKE_UP_PIN)) {
-    //gameState =3 ;
-
-    Serial.println("PRESSED");
+void press() {
+  int buttonPressed = digitalRead(WAKE_UP_PIN);
+  // debouncing
+  delay(20);
+  if (!interruptStatePressed) {
+    if (!buttonPressed) {
+      interruptStatePressed = true;
+      //
+      gameState=GAME_START;
+    }
+  } else {
+    if (!buttonPressed) {
+      interruptStatePressed = false;
+    }
   }
 }
 /*initializing for game onset*/
