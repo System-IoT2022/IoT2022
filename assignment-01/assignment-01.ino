@@ -1,5 +1,6 @@
 #include <avr/sleep.h>
 #include <math.h>
+#include "ButtonLeds.h"
 //#include "TimerOne.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
@@ -19,20 +20,21 @@
 #define SLEEPMODE 6
 #define WAKING_STATE 7
 //arduino environment
-int ledPins[NLED];
+int ledPins[NLED] = {5, 6, 7, 8};
 int redLedPin;
 int redIntensity;
-int buttonPins[NLED];
+int buttonPins[NLED] = {2, 11, 12, 13};
 int potentiometerPin;
 unsigned long time_now;
 unsigned long lastPress = 0;
 boolean interruptStatePressed;
+ButtonLeds *buttonLeds;
 
 //game settings
 short int gameState;
 int score = 0;
 int penalty = 0;
-int fadeAmount = 51;
+int fadeAmount = 5;
 int currIntensity = 0;
 
 //game logics
@@ -44,21 +46,16 @@ int potentiometer;
 
 
 
-
 void setup() {
   // put your setup code here, to run once:
-  attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wake, RISING);
-  for (int i = 0; i < NLED; i++) {
-    ledPins[i] = 5 + i;
-    buttonPins[i] = 10 + i;
-    pinMode(buttonPins[i], INPUT);
-    pinMode(ledPins[i], OUTPUT);
-  }
+  Serial.begin(115200);
+  attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), press, RISING);
   interruptStatePressed = false;
   redIntensity = 0;
   pinMode(redLedPin, OUTPUT);
-  Serial.begin(115200);
-  gameState = USER_INPUT;
+  gameState = WELCOME;
+  buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
+  buttonLeds->init(INPUT_PULLUP);
   //Timer1.initialize(1000000);
 }
 
@@ -67,19 +64,21 @@ void loop() {
   //updateLedStates();
   switch (gameState) {
     case WELCOME:  //initial state
-      noInterrupts();
+      //noInterrupts();
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
       time_now = millis();
       gameState = USER_INPUT;
-      configureCommon();
+      delay(20);
+      //configureCommon();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
       if (millis() < time_now + WAITING_TIME) {
-        analogWrite(redLedPin, currIntensity);
+        //analogWrite(redLedPin, currIntensity);
 
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
 
-        press();
+        buttonLeds->polling();
+        Serial.println(millis());
 
       } else { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
@@ -190,14 +189,14 @@ void createNewSequence(int sequence[NLED], int range) {
 void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
   analogWrite(LED_PIN, *currIntensity);
   *currIntensity = *currIntensity + *fadeAmount;
-  if (*currIntensity == 0 || *currIntensity == 255) {
+  if (*currIntensity == 0 || *currIntensity == 200) {
     *fadeAmount = -*fadeAmount;
   }
   // Serial.println(String("in function: ") + *currIntensity);
 
   //Serial.println(String("in function2: ") + *fadeAmount);
   //Serial.println(gameState);
-  delay(200);
+  delay(10);
 }
 /*check whether the user was able to recreate the lighting sequence*/
 bool wereUserInputsCorrect() {
@@ -228,6 +227,7 @@ void press() {
   int buttonPressed = digitalRead(WAKE_UP_PIN);
   // debouncing
   delay(20);
+  Serial.println("button pressed!");
   if (!interruptStatePressed) {
     if (!buttonPressed) {
       interruptStatePressed = true;
