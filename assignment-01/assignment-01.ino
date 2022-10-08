@@ -8,7 +8,7 @@
 #define WAITING_TIME 10000
 #define T1 3000
 #define T2 3000
-#define T3 5000
+#define T3 10000
 #define GAME_REWARD 10
 #define REDLEDPIN 9
 
@@ -23,7 +23,7 @@
 int ledPins[NLED] = {5, 6, 7, 8};
 int redLedPin;
 int redIntensity;
-int buttonPins[NLED] = {2, 11, 12, 13};
+int buttonPins[NLED] = {10, 11, 12, 13};
 int potentiometerPin;
 unsigned long time_now;
 unsigned long lastPress = 0;
@@ -45,13 +45,16 @@ int sequence[NLED];
 int potentiometer;
 
 
+void wakeUp(){
 
+}
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), press, RISING);
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wakeUp, RISING);
   interruptStatePressed = false;
   redIntensity = 0;
+  redLedPin = REDLEDPIN;
   pinMode(redLedPin, OUTPUT);
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
@@ -62,6 +65,7 @@ void setup() {
 void loop() {
   //polling();
   //updateLedStates();
+    //Serial.println(gameState);
   switch (gameState) {
     case WELCOME:  //initial state
       //noInterrupts();
@@ -69,7 +73,8 @@ void loop() {
       time_now = millis();
       gameState = USER_INPUT;
       delay(20);
-      //configureCommon();
+      configureDistinct();
+      //turnOffLeds();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
       if (millis() < time_now + WAITING_TIME) {
@@ -77,8 +82,12 @@ void loop() {
 
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
 
-        buttonLeds->polling();
-        Serial.println(millis());
+        noInterrupts();
+        if(buttonLeds->polling()){
+          gameState = GAME_START;
+        }
+        interrupts();
+       // Serial.println(millis());
 
       } else { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
@@ -86,65 +95,70 @@ void loop() {
       }
       break;
     case GAME_START:  //Game starts!
-      configureDistinct();
+      //configureDistinct();
       gameStart();
-      Serial.println("GO");
-      gameState = DURING_GAME;
+      Serial.println("GO!");
       break;
     case DURING_GAME:  //during game{showing patterns}
       //wait a bit for T1 milliseconds
-      turnOffLeds();
-      //Serial.println("adsdmasdma");
-      //delay(random(T1));
+      delay(T1);
       //show tricks  for T2 milliseconds
       createNewSequence(sequence, 2);
       turnOnLights(sequence);
-      updateLedStates();
-      ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
-
-      Serial.println(String(" ") + redIntensity);
-      delay(random(T2));
+      delay(T2);
       //applayPenaltyToUserForAnyInputs();
-      //time_now = millis();
-      //gameState = 5;
+      time_now = millis();
+      gameState = END_GAME;
+      turnOffLeds();
       break;
     case END_GAME:  //game{user inputs}
       //input time for T3 milliseconds
-      turnOffLeds();
-      if (millis < time_now + T3) {
+      if (millis() < time_now + T3) {
         // do nothing, waiting user to finish inputs
+        getUserMoves();
+        //Serial.println("waiting for result");
       } else {
         //exsamination of the inputs
+          noInterrupts();
         if (wereUserInputsCorrect()) {
           score += GAME_REWARD;
           Serial.println(String("New point! Score: ") + score);
+           gameState = DURING_GAME;
         } else {
-          penalty += 1;
+          penalty++;
           Serial.println("Penalty!");
           digitalWrite(redLedPin, HIGH);
           delay(1000);
+          turnOffLeds();
+          gameState = DURING_GAME;
           if (penalty == 3) {
             Serial.println(String("Game Over. Final Score: ") + score);
             gameState = WELCOME;
             penalty = 0;
           }
         }
+          interrupts();
       }
 
       break;
     case SLEEPMODE:  //sleepmode
-      interrupts();
+      //interrupts();
+      configureCommon();
+      turnOffLeds();
       set_sleep_mode(SLEEP_MODE_PWR_DOWN);
       sleep_enable();
       sleep_mode();
       /*during deep sleeping mode*/
+
+      sleep_disable(); 
+      gameState = WELCOME;
       break;
     case WAKING_STATE:  //wking state
       /** The program will continue from here. **/
-      Serial.println("WAKE UP");
+      //Serial.println("WAKE UP");
       /* First thing to do is disable sleep. */
-      wake();
-      gameState = WELCOME;
+      //wake();
+      //gameState = WELCOME;
       break;
     default:
       break;
@@ -176,6 +190,7 @@ void turnOnLights(int sequence[NLED]) {
   for (int i = 0; i < NLED; i++) {
     ledStates[i] = sequence[i];
   }
+  updateLedStates();
 }
 /*a new sequence used for turning on lights*/
 void createNewSequence(int sequence[NLED], int range) {
@@ -200,7 +215,37 @@ void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
 }
 /*check whether the user was able to recreate the lighting sequence*/
 bool wereUserInputsCorrect() {
+
+    for(int i = 0; i < NLED; i++){
+    Serial.print(buttonStates[i] + String(" "));
+  }
+  Serial.println("");
+  for(int i = 0; i < NLED; i++){
+    Serial.print(sequence[i] + String(" "));
+  }
+  Serial.println("");
+
+  for(int i = 0; i < NLED; i++){
+    if(sequence[i] != buttonStates[i]){
+      return false;
+    }
+  }
+  
+
+  return true;
 }
+
+void getUserMoves(){
+  for(int i = 0; i < NLED; i++){
+    if(buttonStates[i] == 0){
+     buttonStates[i] = digitalRead(buttonPins[i]) == LOW ? 1 : 0;
+    }
+    //Serial.print(buttonStates[i] + String(" "));
+    
+  }
+  Serial.println("");
+}
+
 
 
 //here i should apply penalty to user when he touches any buttons
@@ -212,12 +257,12 @@ void configureCommon() {  //any pressed button
 
   for (int i = 0; i < sizeof(buttonPins) / sizeof(int); i++) {
     pinMode(buttonPins[i], OUTPUT);
-    digitalWrite(buttonPins[i], LOW);
+    //digitalWrite(buttonPins[i], LOW);
   }
 }
 void configureDistinct() {  // distinct button are recognized when pressed
   pinMode(WAKE_UP_PIN, OUTPUT);
-  digitalWrite(WAKE_UP_PIN, LOW);
+  digitalWrite(WAKE_UP_PIN, HIGH);
 
   for (int i = 0; i < sizeof(buttonPins) / sizeof(int); i++) {
     pinMode(buttonPins[i], INPUT_PULLUP);
@@ -246,9 +291,10 @@ void gameStart() {
     sequence[i] = 0;
   }
   turnOffLeds();
+  digitalWrite(redLedPin, LOW);
   score = 0;
   penalty = 0;
-  gameState = 2;
+  gameState = DURING_GAME;
 }
 /*turn off all lights*/
 void turnOffLeds() {
@@ -256,4 +302,5 @@ void turnOffLeds() {
     ledStates[i] = 0;
     redLed = 0;
   }
+  updateLedStates();
 }
