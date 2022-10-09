@@ -9,7 +9,7 @@ class ButtonLeds{
   public:
     ButtonLeds(int input[], int output[], int len);
     void init(int inputMode);
-    bool polling();
+    bool polling(bool);
     ~ButtonLeds(){
         delete[] inputPins;
         delete[] ledPins;

@@ -22,17 +22,17 @@
       }
     }
 
-    bool ButtonLeds::polling(){
+    bool ButtonLeds::polling(bool mantainState){
       bool on = false;
       for(int i = 0; i < length; i++){
          int sensor_value = digitalRead(inputPins[i]);
         //debouncing
-        delay(20);
+        delay(50);
         if(sensor_value == LOW){
           digitalWrite(ledPins[i], HIGH);
           on = true;
-        }else{
-          digitalWrite(ledPins[i], LOW);
+        }else if(!mantainState){
+         digitalWrite(ledPins[i], LOW);
         }
       }
       return on;
