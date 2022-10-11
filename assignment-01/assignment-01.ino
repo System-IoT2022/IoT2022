@@ -42,7 +42,7 @@ int redLed;
 int buttonStates[NLED];
 int ledStates[NLED];
 int sequence[NLED];
-int potentiometer;
+float potentiometer;
 
 
 void wakeUp() {
@@ -58,6 +58,7 @@ void setup() {
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
+  potentiometer=1;
   //Timer1.initialize(1000000);
 }
 
@@ -77,7 +78,7 @@ void loop() {
       //turnOffLeds();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-      if (millis() < time_now + WAITING_TIME) {
+      if (millis() < time_now + WAITING_TIME*potentiometer) {
         //analogWrite(redLedPin, currIntensity);
 
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
@@ -100,20 +101,24 @@ void loop() {
       Serial.println("GO!");
       break;
     case DURING_GAME:  //during game{showing patterns}
-      //wait a bit for T1 milliseconds
-      delay(T1);
+
       //show tricks  for T2 milliseconds
       createNewSequence(sequence, 2);
-      turnOnLights(sequence);
-      delay(T2);
-      //applayPenaltyToUserForAnyInputs();
-      time_now = millis();
-      gameState = END_GAME;
-      turnOffLeds();
+      if (ledOn(sequence) >= 1) {
+        //wait a bit for T1 milliseconds
+        delay(T1/potentiometer);
+        //check if at least one led is on
+        turnOnLights(sequence);
+        delay(T2/potentiometer);
+        //applayPenaltyToUserForAnyInputs();
+        time_now = millis();
+        gameState = END_GAME;
+        turnOffLeds();
+      }
       break;
     case END_GAME:  //game{user inputs}
       //input time for T3 milliseconds
-      if (millis() < time_now + T3) {
+      if (millis() < time_now + T3/potentiometer) {
         // do nothing, waiting user to finish inputs
         getUserMoves();
         buttonLeds->polling(true);
@@ -122,9 +127,12 @@ void loop() {
         //exsamination of the inputs
         noInterrupts();
         if (wereUserInputsCorrect()) {
-          score += GAME_REWARD;
+          Serial.write("new game");
+          score += GAME_REWARD*potentiometer;
           Serial.println(String("New point! Score: ") + score);
           gameState = DURING_GAME;
+          
+
         } else {
           penalty++;
           Serial.println("Penalty!");
@@ -137,6 +145,7 @@ void loop() {
             penalty = 0;
           }
         }
+        resetInput();
         interrupts();
       }
 
@@ -189,6 +198,16 @@ void createNewSequence(int sequence[NLED], int range) {
   }
   //Serial.println("");
 }
+/*count number of leds*/
+int ledOn(int sequence[NLED]) {
+  int c = 0;
+  for (int i = 0; i < NLED; i++) {
+    if (sequence[i]) {
+      c++;
+    }
+  }
+  return c;
+}
 /* the functions does analog write from 0 to 255 */
 void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
   analogWrite(LED_PIN, *currIntensity);
@@ -202,13 +221,21 @@ void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
   //Serial.println(gameState);
   delay(10);
 }
+bool resetInput() {
+  for (int i = 0; i < NLED; i++) {
+    buttonStates[i] = 0;
+  }
+}
 /*check whether the user was able to recreate the lighting sequence*/
 bool wereUserInputsCorrect() {
-
+  Serial.println("user input:");
   for (int i = 0; i < NLED; i++) {
+
     Serial.print(buttonStates[i] + String(" "));
   }
   Serial.println("");
+
+  Serial.println("sequenze generated");
   for (int i = 0; i < NLED; i++) {
     Serial.print(sequence[i] + String(" "));
   }
@@ -231,7 +258,7 @@ void getUserMoves() {
     }
     //Serial.print(buttonStates[i] + String(" "));
   }
-  Serial.println("");
+  //Serial.println("");
 }
 
 
