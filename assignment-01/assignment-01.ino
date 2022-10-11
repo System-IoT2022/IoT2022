@@ -61,8 +61,6 @@ void setup() {
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
-  //Timer1.initialize(1000000);
-  //Timer1.attachInterrupt(wakeUp));
   randomSeed(analogRead(0));
   timer = new Timer();
   timer->setupPeriod(1000);
@@ -98,14 +96,14 @@ void loop() {
       break;
     case DURING_GAME:  //during game{showing patterns}
       //wait a bit for T1 milliseconds
-      delay(T1);
+      sleep(T1);
       //show tricks  for T2 milliseconds
       createNewSequence(sequence, 2);
       turnOnLights(sequence);
-      delay(T2);
+      sleep(T2);
       //applayPenaltyToUserForAnyInputs();
        if(buttonLeds->polling(false)){
-        //applay penalty
+         
       }
       time_now = millis();
       gameState = END_GAME;
