@@ -42,8 +42,8 @@ int redLed;
 int buttonStates[NLED];
 int ledStates[NLED];
 int sequence[NLED];
-float potentiometer;
-
+int* potentiometer;
+int speedUp = 1;
 
 void wakeUp() {
 }
@@ -58,7 +58,6 @@ void setup() {
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
-  potentiometer=1;
   //Timer1.initialize(1000000);
 }
 
@@ -71,6 +70,9 @@ void loop() {
     case WELCOME:  //initial state
       //noInterrupts();
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+      Serial.println(analogRead(potentiometerPin));
+      speedUp = setDifficult(analogRead(potentiometerPin));
+      Serial.print(speedUp);
       delay(1000);
       time_now = millis();
       gameState = USER_INPUT;
@@ -78,7 +80,7 @@ void loop() {
       //turnOffLeds();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-      if (millis() < time_now + WAITING_TIME*potentiometer) {
+      if (millis() < time_now + WAITING_TIME / speedUp) {
         //analogWrite(redLedPin, currIntensity);
 
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
@@ -106,10 +108,10 @@ void loop() {
       createNewSequence(sequence, 2);
       if (ledOn(sequence) >= 1) {
         //wait a bit for T1 milliseconds
-        delay(T1/potentiometer);
+        delay(T1/speedUp);
         //check if at least one led is on
         turnOnLights(sequence);
-        delay(T2/potentiometer);
+        delay(T2 / speedUp);
         //applayPenaltyToUserForAnyInputs();
         time_now = millis();
         gameState = END_GAME;
@@ -118,26 +120,28 @@ void loop() {
       break;
     case END_GAME:  //game{user inputs}
       //input time for T3 milliseconds
-      if (millis() < time_now + T3/potentiometer) {
+      if (millis() < time_now + T3 / speedUp) {
         // do nothing, waiting user to finish inputs
         getUserMoves();
         buttonLeds->polling(true);
         //Serial.println("waiting for result");
       } else {
         //exsamination of the inputs
-        noInterrupts();
+        
         if (wereUserInputsCorrect()) {
+          turnOffLeds();
           Serial.write("new game");
-          score += GAME_REWARD*potentiometer;
+          score += GAME_REWARD * speedUp;
           Serial.println(String("New point! Score: ") + score);
           gameState = DURING_GAME;
-          
+
 
         } else {
+          turnOffLeds();
           penalty++;
           Serial.println("Penalty!");
           digitalWrite(redLedPin, HIGH);
-          //delay(3000);
+          delay(1000);
           gameState = DURING_GAME;
           if (penalty == 3) {
             Serial.println(String("Game Over. Final Score: ") + score);
@@ -145,7 +149,10 @@ void loop() {
             penalty = 0;
           }
         }
+        noInterrupts();
+        turnOffLeds();
         resetInput();
+        delay(1000);
         interrupts();
       }
 
@@ -319,3 +326,7 @@ void turnOffLeds() {
   }
   updateLedStates();
 }
+int setDifficult(int value) {   
+  value =((value  < 255 ? 255 : value) / 255);
+    return value;
+  }
