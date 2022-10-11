@@ -80,7 +80,7 @@ void loop() {
       //turnOffLeds();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-      if (millis() < time_now + WAITING_TIME / speedUp) {
+      if (millis() < time_now + WAITING_TIME ) {
         //analogWrite(redLedPin, currIntensity);
 
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
@@ -111,7 +111,7 @@ void loop() {
         delay(T1/speedUp);
         //check if at least one led is on
         turnOnLights(sequence);
-        delay(T2 / speedUp);
+        //delay(T2 / speedUp);
         //applayPenaltyToUserForAnyInputs();
         time_now = millis();
         gameState = END_GAME;
