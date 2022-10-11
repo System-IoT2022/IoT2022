@@ -64,7 +64,7 @@ void setup() {
   potentiometer=1;
   randomSeed(analogRead(0));
   timer = new Timer();
-  timer->setupPeriod(1000);
+
 }
 
 void loop() {
@@ -124,7 +124,7 @@ void loop() {
         buttonLeds->polling(true);
       } else {
         //exsamination of the inputs
-        noInterrupts();
+        
         if (wereUserInputsCorrect()) {
           turnOffLeds();
           Serial.write("new game");
@@ -146,7 +146,7 @@ void loop() {
             penalty = 0;
           }
         }
-        
+        noInterrupts();
         turnOffLeds();
         resetInput();
         delay(1000);
