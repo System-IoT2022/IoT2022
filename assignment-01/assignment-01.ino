@@ -109,7 +109,7 @@ void loop() {
         delay(T1/speedUp);
         //check if at least one led is on
         turnOnLights(sequence);
-        //delay(T2 / speedUp);
+        delay(T2 / speedUp);
         //applayPenaltyToUserForAnyInputs();
         time_now = millis();
         gameState = END_GAME;
