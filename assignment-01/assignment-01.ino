@@ -1,7 +1,9 @@
 #include <avr/sleep.h>
+#include <avr/power.h>
 #include <math.h>
 #include "ButtonLeds.h"
-//#include "TimerOne.h"
+#include <TimerOne.h>
+#include "Timer.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
 
@@ -29,6 +31,7 @@ unsigned long time_now;
 unsigned long lastPress = 0;
 boolean interruptStatePressed;
 ButtonLeds* buttonLeds;
+Timer *timer;
 
 //game settings
 short int gameState;
@@ -59,36 +62,30 @@ void setup() {
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
   potentiometer=1;
-  //Timer1.initialize(1000000);
+  randomSeed(analogRead(0));
+  timer = new Timer();
+  timer->setupPeriod(1000);
 }
 
 void loop() {
-  //polling();
-
-  //updateLedStates();
-  //Serial.println(gameState);
   switch (gameState) {
     case WELCOME:  //initial state
-      //noInterrupts();
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
-      delay(1000);
+      sleep(1000);
       time_now = millis();
       gameState = USER_INPUT;
       configureDistinct();
-      //turnOffLeds();
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
+
       if (millis() < time_now + WAITING_TIME*potentiometer) {
         //analogWrite(redLedPin, currIntensity);
-
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
-
         noInterrupts();
         if (buttonLeds->polling(false)) {
           gameState = GAME_START;
         }
         interrupts();
-        // Serial.println(millis());
 
       } else { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
@@ -106,10 +103,10 @@ void loop() {
       createNewSequence(sequence, 2);
       if (ledOn(sequence) >= 1) {
         //wait a bit for T1 milliseconds
-        delay(T1/potentiometer);
+        sleep(T1/potentiometer);
         //check if at least one led is on
         turnOnLights(sequence);
-        delay(T2/potentiometer);
+        sleep(T2/potentiometer);
         //applayPenaltyToUserForAnyInputs();
         time_now = millis();
         gameState = END_GAME;
@@ -122,7 +119,6 @@ void loop() {
         // do nothing, waiting user to finish inputs
         getUserMoves();
         buttonLeds->polling(true);
-        //Serial.println("waiting for result");
       } else {
         //exsamination of the inputs
         noInterrupts();
@@ -175,6 +171,7 @@ void loop() {
 }
 
 
+
 /*update the light based on the states*/
 void updateLedStates() {
   for (int i = 0; i < NLED; i++) {
@@ -194,9 +191,7 @@ void turnOnLights(int sequence[NLED]) {
 void createNewSequence(int sequence[NLED], int range) {
   for (int i = 0; i < NLED; i++) {
     sequence[i] = random(range);
-    // Serial.print(String(" ") + sequence[i]);
   }
-  //Serial.println("");
 }
 /*count number of leds*/
 int ledOn(int sequence[NLED]) {
@@ -215,10 +210,6 @@ void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
   if (*currIntensity == 0 || *currIntensity == 200) {
     *fadeAmount = -*fadeAmount;
   }
-  // Serial.println(String("in function: ") + *currIntensity);
-
-  //Serial.println(String("in function2: ") + *fadeAmount);
-  //Serial.println(gameState);
   delay(10);
 }
 bool resetInput() {
@@ -245,9 +236,7 @@ bool wereUserInputsCorrect() {
     if (sequence[i] != buttonStates[i]) {
       return false;
     }
-  }
-
-
+  } 
   return true;
 }
 
@@ -256,23 +245,14 @@ void getUserMoves() {
     if (buttonStates[i] == 0) {
       buttonStates[i] = digitalRead(buttonPins[i]) == LOW ? 1 : 0;
     }
-    //Serial.print(buttonStates[i] + String(" "));
   }
   //Serial.println("");
 }
 
-
-
-//here i should apply penalty to user when he touches any buttons
-void applayPenaltyToUserForAnyInputs() {
-}
-
 void configureCommon() {  //any pressed button
   pinMode(WAKE_UP_PIN, INPUT_PULLUP);
-
   for (int i = 0; i < sizeof(buttonPins) / sizeof(int); i++) {
     pinMode(buttonPins[i], OUTPUT);
-    //digitalWrite(buttonPins[i], LOW);
   }
 }
 void configureDistinct() {  // distinct button are recognized when pressed
@@ -283,23 +263,7 @@ void configureDistinct() {  // distinct button are recognized when pressed
     pinMode(buttonPins[i], INPUT_PULLUP);
   }
 }
-void press() {
-  int buttonPressed = digitalRead(WAKE_UP_PIN);
-  // debouncing
-  delay(20);
-  Serial.println("button pressed!");
-  if (!interruptStatePressed) {
-    if (!buttonPressed) {
-      interruptStatePressed = true;
-      //
-      gameState = GAME_START;
-    }
-  } else {
-    if (!buttonPressed) {
-      interruptStatePressed = false;
-    }
-  }
-}
+
 /*initializing for game onset*/
 void gameStart() {
   for (int i = 0; i < NLED; i++) {
@@ -318,4 +282,36 @@ void turnOffLeds() {
     redLed = 0;
   }
   updateLedStates();
+}
+
+void sleep(int ms){
+  timer->setupPeriod(ms);
+  lightSleep();
+}
+
+/*
+ * Enter sleep mode, with Timer 1 active
+ */
+void lightSleep(void)
+{
+  set_sleep_mode(SLEEP_MODE_IDLE);
+  sleep_enable();
+
+  /* Disable all of the unused peripherals. This will reduce power
+   * consumption further and, more importantly, some of these
+   * peripherals may generate interrupts that will wake our Arduino from
+   * sleep!
+   */
+  power_adc_disable();
+  power_spi_disable();
+  power_timer0_disable();
+  // power_timer1_disable();
+  power_timer2_disable();
+  power_twi_disable();  
+  /* Now enter sleep mode. */
+  sleep_mode();  
+  /* The program will continue from here after the timer timeout*/
+  sleep_disable(); /* First thing to do is disable sleep. */
+  /* Re-enable the peripherals. */
+  power_all_enable();
 }
