@@ -5,6 +5,7 @@ private:
   int* inputPins;
   int* ledPins;
   int length;
+  int* buttonCounts;
 
 public:
   ButtonLeds(int input[], int output[], int len);

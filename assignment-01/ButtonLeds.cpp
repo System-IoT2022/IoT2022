@@ -4,6 +4,7 @@ ButtonLeds::ButtonLeds(int input[], int output[], int len) {
   this->length = len;
   inputPins = new int[len];
   ledPins = new int[len];
+  buttonCounts = new int[len];
   if (!inputPins || !ledPins) {
     Serial.println("error on initialization");
     return;
@@ -11,6 +12,7 @@ ButtonLeds::ButtonLeds(int input[], int output[], int len) {
   for (int i = 0; i < len; i++) {
     inputPins[i] = input[i];
     ledPins[i] = output[i];
+    buttonCounts[i] = 0;
   }
 };
 
