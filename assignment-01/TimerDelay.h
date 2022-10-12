@@ -21,7 +21,7 @@ public:
       case 0:
         time_now = micros();
         *wait = 1;
-        Serial.println("wait");
+        //Serial.println("wait");
         break;
       case 1:
         if (micros() < time_now + seconds * 1000000) {
@@ -29,7 +29,7 @@ public:
         } else {
           //done waiting
           *wait = 2;
-          Serial.println("done waiting");
+          //Serial.println("done waiting");
         }
         break;
     }

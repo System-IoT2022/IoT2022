@@ -2,16 +2,16 @@
 #include <avr/power.h>
 #include <math.h>
 #include "ButtonLeds.h"
-#include <TimerOne.h>
+//#include <TimerOne.h>
 #include "Timer.h"
 #include "TimerDelay.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
 
 #define WAITING_TIME 10
-#define T1 3
+#define T1 2
 #define T2 3
-#define T3 10000
+#define T3 6
 #define GAME_REWARD 10
 #define REDLEDPIN 9
 
@@ -23,6 +23,7 @@
 #define SLEEPMODE 6
 #define WAKING_STATE 7
 #define SHOW_SEQUENCE 8
+#define PENALTY 9
 //arduino environment
 int ledPins[NLED] = { 5, 6, 7, 8 };
 int redLedPin;
@@ -35,7 +36,6 @@ boolean interruptStatePressed;
 ButtonLeds* buttonLeds;
 Timer* timer;
 TimerDelay* twait;
-TimerDelay* twait2;
 
 //game settings
 short int gameState;
@@ -51,8 +51,8 @@ int buttonStates[NLED];
 int ledStates[NLED];
 int sequence[NLED];
 int* potentiometer;
-int speedUp = 1;
-
+int speedUp;
+float factor;
 void wakeUp() {
 }
 void setup() {
@@ -66,17 +66,18 @@ void setup() {
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
-  potentiometer = 1;
   randomSeed(analogRead(0));
-  timer = new Timer();
+  //timer = new Timer();
   twait = new TimerDelay();
-  twait2 = new TimerDelay();
+  potentiometer = 1;
+  factor = 1;
+  speedUp = 1;
 }
 
 void loop() {
   switch (gameState) {
     case WELCOME:  //initial state
-      /*Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+                   /*Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
       Serial.println(analogRead(potentiometerPin));
       speedUp = setDifficult(analogRead(potentiometerPin));
       Serial.print(speedUp);
@@ -84,125 +85,103 @@ void loop() {
       time_now = millis();
       gameState = USER_INPUT;
       configureDistinct();*/
-      if (twait->delay2(1)) {
-        Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
-        //Serial.println(analogRead(potentiometerPin));
-        speedUp = setDifficult(analogRead(potentiometerPin));
-        //Serial.print(speedUp);
-        //delay(1000);
-        time_now = millis();
-        gameState = USER_INPUT;
-        configureDistinct();
-        twait->resetTimer();
-      }
+
+      Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+
+      speedUp = setDifficult(analogRead(potentiometerPin));
+      Serial.println("Difficulty select at :" + String(speedUp) + " [1x-4x]");
+      gameState = USER_INPUT;
+      configureDistinct();
+      twait->resetTimer();
 
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-                      /*
-      if (millis() < time_now + WAITING_TIME) {
-        //analogWrite(redLedPin, currIntensity);
-        ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
-        noInterrupts();
-        if (buttonLeds->polling(false)) {
-          gameState = GAME_START;
-        }
-        interrupts();
-
-      } else { 
-        analogWrite(REDLEDPIN, LOW);
-        gameState = SLEEPMODE;
-      }*/
-
       if (twait->delay2(WAITING_TIME)) { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
         gameState = SLEEPMODE;
         twait->resetTimer();
       } else {
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
-        if (buttonLeds->polling(false)) {
+        if (digitalRead(buttonPins[0]) == LOW) {  
           gameState = GAME_START;
         }
       }
       break;
     case GAME_START:  //Game starts!
-      //configureDistinct();
       gameStart();
       Serial.println("GO!");
+      twait->resetTimer();
       break;
     case DURING_GAME:  //during game{showing patterns}
-      /*
-      //show tricks  for T2 milliseconds
-      createNewSequence(sequence, 2);
-      if (ledOn(sequence) >= 1) {
-        //wait a bit for T1 milliseconds
-        delay(T1 / speedUp);
-        //check if at least one led is on
-        turnOnLights(sequence);
-        delay(T2 / speedUp);
-        //applayPenaltyToUserForAnyInputs();
-        time_now = millis();
-        gameState = END_GAME;
-        turnOffLeds();
-      }*/
-      if (twait->delay2(T1)) {
-        //check if at least one led is on
+
+      if (twait->delay2(T1)) {      
         do {
           createNewSequence(sequence, 2);
-        } while (ledOn(sequence) == 0);
+        } while (ledOn(sequence) == 0);//check if at least one led is on in the sequence
         turnOnLights(sequence);
         gameState = SHOW_SEQUENCE;
         twait->resetTimer();
       }
       break;
     case SHOW_SEQUENCE:
-      if (twait->delay2(T2)) {
-        time_now = millis();
+      if (twait->delay2(T2 / (speedUp * factor))) {
+        //time_now = millis();//no more usefull???
         turnOffLeds();
         gameState = END_GAME;
         twait->resetTimer();
+      } else {
+        //CHECK INPUT
+        if (buttonLeds->polling(true)) {
+          turnOffLeds();
+          gameState = PENALTY;
+          Serial.println("you got penalty by pressing during sequence!");
+          digitalWrite(redLedPin, HIGH);
+          twait->resetTimer();
+        }
       }
       break;
     case END_GAME:  //game{user inputs}
       //input time for T3 milliseconds
-      if (millis() < time_now + T3 / speedUp) {
-        // do nothing, waiting user to finish inputs
-        getUserMoves();
-        buttonLeds->polling(true);
-      } else {
-        //exsamination of the inputs
 
+      if (twait->delay2(T3 / (speedUp * factor))) {
+        turnOffLeds();
+        //exsamination of the inputs
         if (wereUserInputsCorrect()) {
-          turnOffLeds();
-          Serial.write("new game");
-          score += GAME_REWARD * speedUp;
+          Serial.println("new game");
+          score += GAME_REWARD * speedUp * factor;
           Serial.println(String("New point! Score: ") + score);
           gameState = DURING_GAME;
-
+          factor += 0.05;
 
         } else {
-          turnOffLeds();
-          penalty++;
+
+          gameState = PENALTY;
           Serial.println("Penalty!");
           digitalWrite(redLedPin, HIGH);
-          delay(1000);
-          gameState = DURING_GAME;
-          if (penalty == 3) {
-            Serial.println(String("Game Over. Final Score: ") + score);
-            gameState = WELCOME;
-            penalty = 0;
-          }
         }
-
-        noInterrupts();
-        turnOffLeds();
         resetInput();
-        delay(1000);
-        interrupts();
+        twait->resetTimer();
+      } else {
+        getUserMoves();
+        buttonLeds->polling(true);
       }
 
       break;
+    case PENALTY:
+
+      if (twait->delay2(1)) {
+        penalty++;
+        gameState = DURING_GAME;
+        if (penalty == 3) {
+          Serial.println(String("Game Over. Final Score: ") + score);
+          gameState = WELCOME;
+          penalty = 0;
+        }
+        turnOffLeds();
+      }
+      break;
     case SLEEPMODE:  //sleepmode
-      //interrupts();
+      interrupts();
       configureCommon();
       turnOffLeds();
       set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -211,14 +190,8 @@ void loop() {
       /*during deep sleeping mode*/
 
       sleep_disable();
+
       gameState = WELCOME;
-      break;
-    case WAKING_STATE:  //wking state
-      /** The program will continue from here. **/
-      //Serial.println("WAKE UP");
-      /* First thing to do is disable sleep. */
-      //wake();
-      //gameState = WELCOME;
       break;
     default:
       break;
@@ -328,6 +301,7 @@ void gameStart() {
   digitalWrite(redLedPin, LOW);
   score = 0;
   penalty = 0;
+  factor=1;
   gameState = DURING_GAME;
 }
 /*turn off all lights*/
@@ -342,35 +316,4 @@ void turnOffLeds() {
 int setDifficult(int value) {
   value = ((value < 255 ? 255 : value) / 255);
   return value;
-}
-
-void sleep(int ms) {
-  timer->setupPeriod(ms);
-  lightSleep();
-}
-
-/*
- * Enter sleep mode, with Timer 1 active
- */
-void lightSleep(void) {
-  set_sleep_mode(SLEEP_MODE_IDLE);
-  sleep_enable();
-
-  /* Disable all of the unused peripherals. This will reduce power
-   * consumption further and, more importantly, some of these
-   * peripherals may generate interrupts that will wake our Arduino from
-   * sleep!
-   */
-  power_adc_disable();
-  power_spi_disable();
-  power_timer0_disable();
-  // power_timer1_disable();
-  power_timer2_disable();
-  power_twi_disable();
-  /* Now enter sleep mode. */
-  sleep_mode();
-  /* The program will continue from here after the timer timeout*/
-  sleep_disable(); /* First thing to do is disable sleep. */
-  /* Re-enable the peripherals. */
-  power_all_enable();
 }
