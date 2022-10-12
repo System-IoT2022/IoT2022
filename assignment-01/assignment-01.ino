@@ -4,10 +4,11 @@
 #include "ButtonLeds.h"
 #include <TimerOne.h>
 #include "Timer.h"
+#include "TimerDelay.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
 
-#define WAITING_TIME 10000
+#define WAITING_TIME 10
 #define T1 3000
 #define T2 3000
 #define T3 10000
@@ -31,13 +32,14 @@ unsigned long time_now;
 unsigned long lastPress = 0;
 boolean interruptStatePressed;
 ButtonLeds* buttonLeds;
-Timer *timer;
+Timer* timer;
+TimerDelay* twait;
 
 //game settings
 short int gameState;
 int score = 0;
 int penalty = 0;
-int fadeAmount = 5;
+int fadeAmount = 20;
 int currIntensity = 0;
 
 //game logics
@@ -61,27 +63,39 @@ void setup() {
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
-  potentiometer=1;
+  potentiometer = 1;
   randomSeed(analogRead(0));
   timer = new Timer();
-
+  twait = new TimerDelay();
 }
 
 void loop() {
   switch (gameState) {
     case WELCOME:  //initial state
-      Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+      /*Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
       Serial.println(analogRead(potentiometerPin));
       speedUp = setDifficult(analogRead(potentiometerPin));
       Serial.print(speedUp);
       delay(1000);
       time_now = millis();
       gameState = USER_INPUT;
-      configureDistinct();
+      configureDistinct();*/
+      if (twait->delay2(1)) {
+        Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+        //Serial.println(analogRead(potentiometerPin));
+        speedUp = setDifficult(analogRead(potentiometerPin));
+        //Serial.print(speedUp);
+        //delay(1000);
+        time_now = millis();
+        gameState = USER_INPUT;
+        configureDistinct();
+        twait->resetTimer();
+      }
+
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-
-      if (millis() < time_now + WAITING_TIME ) {
+    /*
+      if (millis() < time_now + WAITING_TIME) {
         //analogWrite(redLedPin, currIntensity);
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
         noInterrupts();
@@ -90,9 +104,20 @@ void loop() {
         }
         interrupts();
 
-      } else { /*after 10 secodns, go deep sleep mode.*/
+      } else { 
         analogWrite(REDLEDPIN, LOW);
         gameState = SLEEPMODE;
+      }*/
+
+      if(twait->delay2(WAITING_TIME)){  /*after 10 secodns, go deep sleep mode.*/
+        analogWrite(REDLEDPIN, LOW);
+        gameState = SLEEPMODE;
+        twait->resetTimer();
+      }else{
+        ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
+        if (buttonLeds->polling(false)) {
+          gameState = GAME_START;
+        }
       }
       break;
     case GAME_START:  //Game starts!
@@ -106,7 +131,7 @@ void loop() {
       createNewSequence(sequence, 2);
       if (ledOn(sequence) >= 1) {
         //wait a bit for T1 milliseconds
-        delay(T1/speedUp);
+        delay(T1 / speedUp);
         //check if at least one led is on
         turnOnLights(sequence);
         delay(T2 / speedUp);
@@ -124,7 +149,7 @@ void loop() {
         buttonLeds->polling(true);
       } else {
         //exsamination of the inputs
-        
+
         if (wereUserInputsCorrect()) {
           turnOffLeds();
           Serial.write("new game");
@@ -146,6 +171,7 @@ void loop() {
             penalty = 0;
           }
         }
+
         noInterrupts();
         turnOffLeds();
         resetInput();
@@ -244,7 +270,7 @@ bool wereUserInputsCorrect() {
     if (sequence[i] != buttonStates[i]) {
       return false;
     }
-  } 
+  }
   return true;
 }
 
@@ -292,12 +318,12 @@ void turnOffLeds() {
   updateLedStates();
 }
 
-int setDifficult(int value) {   
-  value =((value  < 255 ? 255 : value) / 255);
-    return value;
-  }
+int setDifficult(int value) {
+  value = ((value < 255 ? 255 : value) / 255);
+  return value;
+}
 
-void sleep(int ms){
+void sleep(int ms) {
   timer->setupPeriod(ms);
   lightSleep();
 }
@@ -305,8 +331,7 @@ void sleep(int ms){
 /*
  * Enter sleep mode, with Timer 1 active
  */
-void lightSleep(void)
-{
+void lightSleep(void) {
   set_sleep_mode(SLEEP_MODE_IDLE);
   sleep_enable();
 
@@ -320,9 +345,9 @@ void lightSleep(void)
   power_timer0_disable();
   // power_timer1_disable();
   power_timer2_disable();
-  power_twi_disable();  
+  power_twi_disable();
   /* Now enter sleep mode. */
-  sleep_mode();  
+  sleep_mode();
   /* The program will continue from here after the timer timeout*/
   sleep_disable(); /* First thing to do is disable sleep. */
   /* Re-enable the peripherals. */
