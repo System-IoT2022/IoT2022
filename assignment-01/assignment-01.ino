@@ -9,8 +9,8 @@
 #define NLED 4
 
 #define WAITING_TIME 10
-#define T1 3000
-#define T2 3000
+#define T1 3
+#define T2 3
 #define T3 10000
 #define GAME_REWARD 10
 #define REDLEDPIN 9
@@ -22,6 +22,7 @@
 #define END_GAME 5
 #define SLEEPMODE 6
 #define WAKING_STATE 7
+#define SHOW_SEQUENCE 8
 //arduino environment
 int ledPins[NLED] = { 5, 6, 7, 8 };
 int redLedPin;
@@ -34,6 +35,7 @@ boolean interruptStatePressed;
 ButtonLeds* buttonLeds;
 Timer* timer;
 TimerDelay* twait;
+TimerDelay* twait2;
 
 //game settings
 short int gameState;
@@ -41,6 +43,7 @@ int score = 0;
 int penalty = 0;
 int fadeAmount = 20;
 int currIntensity = 0;
+bool delayConsumed = false;
 
 //game logics
 int redLed;
@@ -67,6 +70,7 @@ void setup() {
   randomSeed(analogRead(0));
   timer = new Timer();
   twait = new TimerDelay();
+  twait2 = new TimerDelay();
 }
 
 void loop() {
@@ -94,7 +98,7 @@ void loop() {
 
       break;
     case USER_INPUT:  //wait interaction from the user for 10 seconds
-    /*
+                      /*
       if (millis() < time_now + WAITING_TIME) {
         //analogWrite(redLedPin, currIntensity);
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
@@ -109,11 +113,11 @@ void loop() {
         gameState = SLEEPMODE;
       }*/
 
-      if(twait->delay2(WAITING_TIME)){  /*after 10 secodns, go deep sleep mode.*/
+      if (twait->delay2(WAITING_TIME)) { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
         gameState = SLEEPMODE;
         twait->resetTimer();
-      }else{
+      } else {
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
         if (buttonLeds->polling(false)) {
           gameState = GAME_START;
@@ -126,7 +130,7 @@ void loop() {
       Serial.println("GO!");
       break;
     case DURING_GAME:  //during game{showing patterns}
-
+      /*
       //show tricks  for T2 milliseconds
       createNewSequence(sequence, 2);
       if (ledOn(sequence) >= 1) {
@@ -139,6 +143,23 @@ void loop() {
         time_now = millis();
         gameState = END_GAME;
         turnOffLeds();
+      }*/
+      if (twait->delay2(T1)) {
+        //check if at least one led is on
+        do {
+          createNewSequence(sequence, 2);
+        } while (ledOn(sequence) == 0);
+        turnOnLights(sequence);
+        gameState = SHOW_SEQUENCE;
+        twait->resetTimer();
+      }
+      break;
+    case SHOW_SEQUENCE:
+      if (twait->delay2(T2)) {
+        time_now = millis();
+        turnOffLeds();
+        gameState = END_GAME;
+        twait->resetTimer();
       }
       break;
     case END_GAME:  //game{user inputs}
