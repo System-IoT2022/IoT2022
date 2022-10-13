@@ -2,8 +2,6 @@
 #include <avr/power.h>
 #include <math.h>
 #include "ButtonLeds.h"
-//#include <TimerOne.h>
-#include "Timer.h"
 #include "TimerDelay.h"
 #define WAKE_UP_PIN 2  //external button for waking systems
 #define NLED 4
@@ -27,23 +25,19 @@
 //arduino environment
 int ledPins[NLED] = { 5, 6, 7, 8 };
 int redLedPin;
-int redIntensity;
 int buttonPins[NLED] = { 10, 11, 12, 13 };
 int potentiometerPin;
 unsigned long time_now;
 unsigned long lastPress = 0;
-boolean interruptStatePressed;
 ButtonLeds* buttonLeds;
-Timer* timer;
 TimerDelay* twait;
 
 //game settings
-short int gameState;
+int gameState;
 int score = 0;
 int penalty = 0;
-int fadeAmount = 20;
+int fadeAmount = 1;
 int currIntensity = 0;
-bool delayConsumed = false;
 
 //game logics
 int redLed;
@@ -59,15 +53,12 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(WAKE_UP_PIN), wakeUp, RISING);
-  interruptStatePressed = false;
-  redIntensity = 0;
   redLedPin = REDLEDPIN;
   pinMode(redLedPin, OUTPUT);
   gameState = WELCOME;
   buttonLeds = new ButtonLeds(buttonPins, ledPins, NLED);
   buttonLeds->init(INPUT_PULLUP);
   randomSeed(analogRead(0));
-  //timer = new Timer();
   twait = new TimerDelay();
   potentiometer = 1;
   factor = 1;
@@ -75,34 +66,24 @@ void setup() {
 }
 
 void loop() {
+  //Serial.println(currIntensity);
   switch (gameState) {
-    case WELCOME:  //initial state
-                   /*Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
-      Serial.println(analogRead(potentiometerPin));
-      speedUp = setDifficult(analogRead(potentiometerPin));
-      Serial.print(speedUp);
-      delay(1000);
-      time_now = millis();
-      gameState = USER_INPUT;
-      configureDistinct();*/
-
+    case WELCOME:
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
-
       speedUp = setDifficult(analogRead(potentiometerPin));
       Serial.println("Difficulty select at :" + String(speedUp) + " [1x-4x]");
       gameState = USER_INPUT;
       configureDistinct();
       twait->resetTimer();
-
       break;
-    case USER_INPUT:  //wait interaction from the user for 10 seconds
+    case USER_INPUT:                     //wait interaction from the user for 10 seconds
       if (twait->delay2(WAITING_TIME)) { /*after 10 secodns, go deep sleep mode.*/
         analogWrite(REDLEDPIN, LOW);
         gameState = SLEEPMODE;
         twait->resetTimer();
       } else {
         ledFading(REDLEDPIN, &currIntensity, &fadeAmount);
-        if (digitalRead(buttonPins[0]) == LOW) {  
+        if (digitalRead(buttonPins[0]) == LOW) {
           gameState = GAME_START;
         }
       }
@@ -114,10 +95,10 @@ void loop() {
       break;
     case DURING_GAME:  //during game{showing patterns}
 
-      if (twait->delay2(T1)) {      
+      if (twait->delay2(T1)) {
         do {
           createNewSequence(sequence, 2);
-        } while (ledOn(sequence) == 0);//check if at least one led is on in the sequence
+        } while (ledOn(sequence) == 0);  //check if at least one led is on in the sequence
         turnOnLights(sequence);
         gameState = SHOW_SEQUENCE;
         twait->resetTimer();
@@ -147,11 +128,11 @@ void loop() {
         turnOffLeds();
         //exsamination of the inputs
         if (wereUserInputsCorrect()) {
-          Serial.println("new game");
-          score += GAME_REWARD * speedUp * factor;
+          //Serial.println("new turn");
+          score += GAME_REWARD * speedUp * speedUp * factor;
           Serial.println(String("New point! Score: ") + score);
           gameState = DURING_GAME;
-          factor += 0.05;
+          factor *= 1.04;
 
         } else {
 
@@ -180,7 +161,9 @@ void loop() {
         turnOffLeds();
       }
       break;
-    case SLEEPMODE:  //sleepmode
+    case SLEEPMODE:
+      Serial.println("Turning off the platform....");
+      Serial.flush();
       interrupts();
       configureCommon();
       turnOffLeds();
@@ -191,6 +174,9 @@ void loop() {
 
       sleep_disable();
 
+      Serial.println(".... Waking up the platform.");
+
+      delay(500);
       gameState = WELCOME;
       break;
     default:
@@ -235,10 +221,10 @@ int ledOn(int sequence[NLED]) {
 void ledFading(const int LED_PIN, int* currIntensity, int* fadeAmount) {
   analogWrite(LED_PIN, *currIntensity);
   *currIntensity = *currIntensity + *fadeAmount;
-  if (*currIntensity == 0 || *currIntensity == 200) {
+  if (*currIntensity < 1 || *currIntensity > 150) {  //150 bcs too brigth
     *fadeAmount = -*fadeAmount;
   }
-  delay(10);
+  delay(5);
 }
 bool resetInput() {
   for (int i = 0; i < NLED; i++) {
@@ -247,7 +233,7 @@ bool resetInput() {
 }
 /*check whether the user was able to recreate the lighting sequence*/
 bool wereUserInputsCorrect() {
-  Serial.println("user input:");
+  /*Serial.println("user input:");
   for (int i = 0; i < NLED; i++) {
 
     Serial.print(buttonStates[i] + String(" "));
@@ -259,7 +245,7 @@ bool wereUserInputsCorrect() {
     Serial.print(sequence[i] + String(" "));
   }
   Serial.println("");
-
+  */
   for (int i = 0; i < NLED; i++) {
     if (sequence[i] != buttonStates[i]) {
       return false;
@@ -301,7 +287,7 @@ void gameStart() {
   digitalWrite(redLedPin, LOW);
   score = 0;
   penalty = 0;
-  factor=1;
+  factor = 1;
   gameState = DURING_GAME;
 }
 /*turn off all lights*/

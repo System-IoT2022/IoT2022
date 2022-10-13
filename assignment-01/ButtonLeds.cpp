@@ -28,7 +28,6 @@ bool ButtonLeds::polling(bool mantainState = false) {
   for (int i = 0; i < length; i++) {
     int sensor_value = digitalRead(inputPins[i]);
     //debouncing
-    delay(20);
     if (sensor_value == LOW) {
       digitalWrite(ledPins[i], HIGH);
       on = true;
