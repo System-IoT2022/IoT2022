@@ -17,11 +17,12 @@
 #define USER_INPUT 2
 #define GAME_START 3
 #define DURING_GAME 4
-#define END_GAME 5
-#define SLEEPMODE 6
-#define WAKING_STATE 7
-#define SHOW_SEQUENCE 8
+#define SHOW_SEQUENCE 5
+#define END_GAME 6
+#define SLEEPMODE 7
+#define WAKING_STATE 8
 #define PENALTY 9
+#define AFTER_PENALTY 10
 //arduino environment
 int ledPins[NLED] = { 5, 6, 7, 8 };
 int redLedPin;
@@ -155,10 +156,16 @@ void loop() {
         gameState = DURING_GAME;
         if (penalty == 3) {
           Serial.println(String("Game Over. Final Score: ") + score);
-          gameState = WELCOME;
-          penalty = 0;
+          gameState = AFTER_PENALTY;
+          twait->resetTimer();
         }
         turnOffLeds();
+      }
+      break;
+      case AFTER_PENALTY:
+      if (twait->delay2(10)) {
+          gameState = WELCOME;
+          penalty = 0;
       }
       break;
     case SLEEPMODE:
