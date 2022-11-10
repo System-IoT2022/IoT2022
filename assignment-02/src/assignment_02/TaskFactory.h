@@ -49,6 +49,18 @@ public:
   virtual void execute() = 0; 
 };
 
+class LigthningSubSystemTask : public Task {
+  
+public:
+  virtual void init(int period){
+    myPeriod = period;  
+    timeElapsed = 0;
+    active = true;
+  }
+
+  virtual void execute() = 0; 
+};
+
 
 
 #endif
