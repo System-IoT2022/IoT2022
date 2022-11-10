@@ -1,26 +1,69 @@
 #include "Taskcontroller.h"
 #include <TimerOne.h>
+#include "TaskFactory.h"
 #pragma once
 #define MAX_TASKS 10
+#define NORMALCHECK 1000
+#define PREALARMCHECK 500
+#define ALARMCHECK 250
+#define NORMALWATERLEVEL 1
+#define PREALARMWATERLEVEL 1
+#define ALARMWATERLEVEL 1
 
-bool TaskController::addTask(Task* task){
-  if (this->nTasks < MAX_TASKS-1){
+
+
+bool TaskController::addTask(Task* task) {
+  if (this->nTasks < MAX_TASKS - 1) {
     taskList[this->nTasks] = task;
     nTasks++;
     return true;
   } else {
-    return false; 
+    return false;
   }
 }
 
-void TaskController::init(int period){
+void TaskController::init(int period) {
   Task::init(period);
-  //add task
+  Task* t0 = new NormalTask();
+  this->addTask(t0);
+  t0->init(NORMALCHECK);
+
+  Task* t1 = new PreAlarmTask();
+  this->addTask(t1);
+  t1->init(PREALARMCHECK);
+
+  Task* t2 = new AlarmTask();
+  t2->init(ALARMCHECK);
+  this->addTask(t2);
+  this->setActive(true);
 }
 
-void TaskController::execute(){
+void TaskController::execute() {
+  //check sonar distance
+  int level = 0;
+  if (level >= ALARMWATERLEVEL) {
+    this->waterState = ALARM;
+  } else {
+    if (level >= PREALARMWATERLEVEL) {
+      this->waterState = PREALARM;
+    } else {
+      this->waterState = NORMAL;
+    }
+  }
+  switch (this->waterState) {
+    case ALARM:
+      this->taskList[ALARM]->setActive(true);
+      break;
+    case PREALARM:
+      this->taskList[PREALARM]->setActive(true);
+      break;
+    case NORMAL:
+      this->taskList[NORMAL]->setActive(true);
+      break;
+  }
+
   return;
 }
-Task** TaskController::getTask(){
+Task** TaskController::getTask() {
   return this->taskList;
 }

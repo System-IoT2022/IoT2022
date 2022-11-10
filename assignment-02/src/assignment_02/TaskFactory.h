@@ -1,64 +1,49 @@
 #ifndef __TASKFACTORY__
 #define __TASKFACTORY__
+#include "Task.h"
+#include "Led.h"
 
 class NormalTask : public Task {
-  
-public:
-  virtual void init(int period){
-    myPeriod = period;  
-    timeElapsed = 0;
-    active = true;
-  }
+  /*  
+In this situation, the sampling of the water level measure should be done every period PEnormal 
+*/
 
-  virtual void execute() = 0; 
+public:
+  void init(int period);
+  void execute();
 };
 
 class PreAlarmTask : public Task {
-  
-public:
-  virtual void init(int period){
-    myPeriod = period;  
-    timeElapsed = 0;
-    active = true;
-  }
 
-  virtual void execute() = 0; 
+public:
+  void init(int period);
+  void execute();
 };
 
 class AlarmTask : public Task {
-  
-public:
-  virtual void init(int period){
-    myPeriod = period;  
-    timeElapsed = 0;
-    active = true;
-  }
 
-  virtual void execute() = 0; 
+public:
+  void init(int period);
+  void execute();
 };
 
 class HumanControllerTask : public Task {
-  
-public:
-  virtual void init(int period){
-    myPeriod = period;  
-    timeElapsed = 0;
-    active = true;
-  }
 
-  virtual void execute() = 0; 
+public:
+  virtual void init(int period);
+  void execute() = 0;
 };
 
 class LigthningSubSystemTask : public Task {
-  
+private:
+  int pin;
+  Light* led;
+  enum { ON,
+         OFF } state;
 public:
-  virtual void init(int period){
-    myPeriod = period;  
-    timeElapsed = 0;
-    active = true;
-  }
-
-  virtual void execute() = 0; 
+  void init(int period);
+  void setBlinkingPin(int pin);
+  void execute();
 };
 
 
