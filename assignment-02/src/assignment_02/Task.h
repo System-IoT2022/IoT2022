@@ -14,7 +14,7 @@ public:
   }
 
 
-  virtual void execute() = 0;
+  virtual void execute() ;
 
   void changeFrequency(int period){
     myPeriod = period;  
