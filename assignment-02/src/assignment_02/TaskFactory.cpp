@@ -1,5 +1,7 @@
 #include "TaskFactory.h"
-
+void BridgeTask::updateWaterLevel(double waterLevel){
+  this->waterLevel=waterLevel;
+};
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -8,6 +10,7 @@ void NormalTask::execute() {
   // the green led LB is on and LC is off – it means that the bridge can be used.
 }
 
+void NormalTask::updateWaterLevel(double waterLevel){};
 
 
 
@@ -35,7 +38,7 @@ void AlarmTask::setActive(bool active) {
 }
 void AlarmTask::execute() {
   //The green led LB  is turned off and the red led LC is on (without blinking)
-
+  
   /*
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */

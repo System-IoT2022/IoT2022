@@ -12,7 +12,7 @@
 
 
 
-bool TaskController::addTask(Task* task) {
+bool TaskController::addTask(BridgeTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
     taskList[this->nTasks] = task;
     nTasks++;
@@ -24,7 +24,7 @@ bool TaskController::addTask(Task* task) {
 
 void TaskController::init(int period) {
   Task::init(period);
-  Task* t0 = new NormalTask();
+  BridgeTask* t0 = new NormalTask();//create constructor for LB pin and LC pin
   this->addTask(t0);
   t0->init(NORMALCHECK);
 
@@ -42,6 +42,7 @@ void TaskController::execute() {
   STATE newstate;
 
   //check sonar distance
+
   int level = 0;
   if (level >= ALARMWATERLEVEL) {
     newstate = ALARM;
@@ -69,7 +70,7 @@ void TaskController::execute() {
         break;
     }
   }
-
+  this->taskList[this->waterState]->updateWaterLevel(level);
   return;
 }
 Task** TaskController::getTask() {

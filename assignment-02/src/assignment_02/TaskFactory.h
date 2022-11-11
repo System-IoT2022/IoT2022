@@ -3,7 +3,14 @@
 #include "Task.h"
 #include "Led.h"
 
-class NormalTask : public Task {
+class BridgeTask: public Task{
+double waterLevel;
+public:
+  void virtual updateWaterLevel(double waterLevel);
+};
+
+
+class NormalTask : public BridgeTask {
   /*  
 In this situation, the sampling of the water level measure should be done every period PEnormal 
 */
@@ -11,6 +18,7 @@ In this situation, the sampling of the water level measure should be done every 
 public:
   void init(int period);
   void execute();
+  void updateWaterLevel(double waterLevel);
 };
 
 class PreAlarmTask : public Task {
@@ -20,10 +28,11 @@ public:
   void execute();
 };
 
-class AlarmTask : public Task {
+class AlarmTask : public BridgeTask {
 private:
   Task* humanTask;
 public:
+  double waterLevel;
   void setActive(bool active);
   void init(int period);
   void execute();
