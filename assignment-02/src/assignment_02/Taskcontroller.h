@@ -19,6 +19,7 @@ public:
   void init(int period);
   void execute();
   Task** getTask();
+  int getNTask();
 };
 
 #endif

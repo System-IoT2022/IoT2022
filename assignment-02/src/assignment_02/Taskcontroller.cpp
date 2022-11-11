@@ -58,6 +58,7 @@ void TaskController::execute() {
   }
   if (newstate != this->waterState) {
     this->taskList[this->waterState]->setActive(false);
+    this->waterState=newstate;
     switch (this->waterState) {
       case ALARM:
         this->taskList[ALARM]->setActive(true);
@@ -75,4 +76,7 @@ void TaskController::execute() {
 }
 Task** TaskController::getTask() {
   return this->taskList;
+}
+int TaskController::getNTask(){
+  return this->nTasks;
 }
