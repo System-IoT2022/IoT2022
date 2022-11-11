@@ -21,8 +21,10 @@ public:
 };
 
 class AlarmTask : public Task {
-
+private:
+  Task* humanTask;
 public:
+  void setActive(bool active);
   void init(int period);
   void execute();
 };
@@ -30,8 +32,8 @@ public:
 class HumanControllerTask : public Task {
 
 public:
-  virtual void init(int period);
-  void execute() = 0;
+  void init(int period);
+  void execute();
 };
 
 class LigthningSubSystemTask : public Task {

@@ -25,6 +25,13 @@ void PreAlarmTask::execute() {
 
 void AlarmTask::init(int period) {
   Task::init(period);
+  this->humanTask= new HumanControllerTask();
+}
+void AlarmTask::setActive(bool active) {
+  if (!active) {
+    this->humanTask->setActive(false);
+  }
+  Task::setActive(false);
 }
 void AlarmTask::execute() {
   //The green led LB  is turned off and the red led LC is on (without blinking)
@@ -33,10 +40,10 @@ void AlarmTask::execute() {
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
 
+  //if button pressed HumanControllerTask->active
   /*if(!HumanControllerTask->isActive() )
   The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), whose value linearly depends on the the current water level, WL2 and WLMAX (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX). The opening of the valve changes dynamically depending on the current water level
   */
-  //if button pressed HumanControllerTask->active
 }
 
 
@@ -47,7 +54,6 @@ void HumanControllerTask::init(int period) {
   Task::init(period);
 }
 void HumanControllerTask::execute() {
-  Task::setActive(false);
 }
 
 

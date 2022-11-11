@@ -13,7 +13,12 @@ public:
     active = false;
   }
 
+
   virtual void execute() = 0;
+
+  void changeFrequency(int period){
+    myPeriod = period;  
+  }
 
   bool updateAndCheckTime(int basePeriod){
     timeElapsed += basePeriod;
@@ -29,7 +34,7 @@ public:
     return active;
   }
 
-  void setActive(bool active){
+  virtual void setActive(bool active){
     this->active = active;
   }
   

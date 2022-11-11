@@ -37,29 +37,37 @@ void TaskController::init(int period) {
   this->addTask(t2);
   this->setActive(true);
 }
-
 void TaskController::execute() {
+  
+  STATE newstate;
+
   //check sonar distance
   int level = 0;
   if (level >= ALARMWATERLEVEL) {
-    this->waterState = ALARM;
+    newstate = ALARM;
+    Task::changeFrequency(NORMALCHECK);
   } else {
     if (level >= PREALARMWATERLEVEL) {
-      this->waterState = PREALARM;
+      newstate = PREALARM;
+      Task::changeFrequency(PREALARMCHECK);
     } else {
-      this->waterState = NORMAL;
+      newstate = NORMAL;
+      Task::changeFrequency(ALARMCHECK);
     }
   }
-  switch (this->waterState) {
-    case ALARM:
-      this->taskList[ALARM]->setActive(true);
-      break;
-    case PREALARM:
-      this->taskList[PREALARM]->setActive(true);
-      break;
-    case NORMAL:
-      this->taskList[NORMAL]->setActive(true);
-      break;
+  if (newstate != this->waterState) {
+    this->taskList[this->waterState]->setActive(false);
+    switch (this->waterState) {
+      case ALARM:
+        this->taskList[ALARM]->setActive(true);
+        break;
+      case PREALARM:
+        this->taskList[PREALARM]->setActive(true);
+        break;
+      case NORMAL:
+        this->taskList[NORMAL]->setActive(true);
+        break;
+    }
   }
 
   return;

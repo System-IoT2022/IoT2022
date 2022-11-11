@@ -9,12 +9,12 @@ class TaskController : public Task {
 private:
   int nTasks = 0;
   bool addTask(Task* task);
-  enum { NORMAL,
+  enum STATE{ NORMAL,
          PREALARM,
-         ALARM } waterState;
+         ALARM } ;
+  STATE waterState;
 public:
   Task* taskList[MAX_TASKS];
-
   void init(int period);
   void execute();
   Task** getTask();
