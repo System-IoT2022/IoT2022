@@ -1,8 +1,6 @@
 #ifndef __TASKCONTROLLER__
 #define __TASKCONTROLLER__
-#include "Task.h"
 #include "TaskFactory.h"
-#pragma once
 #define MAX_TASKS 10
 
 

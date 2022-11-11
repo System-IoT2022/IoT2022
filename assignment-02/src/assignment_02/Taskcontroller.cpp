@@ -1,7 +1,4 @@
 #include "Taskcontroller.h"
-#include <TimerOne.h>
-#include "TaskFactory.h"
-#pragma once
 #define MAX_TASKS 10
 #define NORMALCHECK 1000
 #define PREALARMCHECK 500

@@ -1,32 +1,29 @@
 #ifndef __TASKFACTORY__
 #define __TASKFACTORY__
 #include "Task.h"
-#include "Led.h"
+#include "BlinkTask.h"
+#include "InnestedTask.h"
+#include "BridgeTask.h"
 
-class BridgeTask: public Task{
-double waterLevel;
-public:
-  void virtual updateWaterLevel(double waterLevel);
-};
+
 
 
 class NormalTask : public BridgeTask {
-  /*  
-In this situation, the sampling of the water level measure should be done every period PEnormal 
-*/
-
 public:
   void init(int period);
   void execute();
   void updateWaterLevel(double waterLevel);
 };
 
-class PreAlarmTask : public Task {
 
+
+class PreAlarmTask : public BridgeTask {
 public:
   void init(int period);
   void execute();
 };
+
+
 
 class AlarmTask : public BridgeTask {
 private:
@@ -36,27 +33,28 @@ public:
   void setActive(bool active);
   void init(int period);
   void execute();
+  bool updateAndCheckTime(int basePeriod);
 };
 
-class HumanControllerTask : public Task {
-
-public:
-  void init(int period);
-  void execute();
-};
 
 class LigthningSubSystemTask : public Task {
 private:
-  int pin;
-  Light* led;
+  int pin = 0;
+  BlinkTask* blinking;
   enum { ON,
          OFF } state;
 public:
+  bool updateAndCheckTime(int basePeriod);
   void init(int period);
   void setBlinkingPin(int pin);
   void execute();
 };
 
+class HumanControllerTask : public InnestedTask {
+public:
+  void init(int period);
+  void routine();
+};
 
 
 #endif

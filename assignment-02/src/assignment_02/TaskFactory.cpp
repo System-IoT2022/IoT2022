@@ -1,7 +1,5 @@
 #include "TaskFactory.h"
-void BridgeTask::updateWaterLevel(double waterLevel){
-  this->waterLevel=waterLevel;
-};
+
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -28,7 +26,7 @@ void PreAlarmTask::execute() {
 
 void AlarmTask::init(int period) {
   Task::init(period);
-  this->humanTask= new HumanControllerTask();
+  this->humanTask = new HumanControllerTask();
 }
 void AlarmTask::setActive(bool active) {
   if (!active) {
@@ -36,15 +34,23 @@ void AlarmTask::setActive(bool active) {
   }
   Task::setActive(false);
 }
+
+bool AlarmTask::updateAndCheckTime(int basePeriod) {
+  BridgeTask::updateAndCheckTime(basePeriod);
+  this->humanTask->updateAndCheckTime(basePeriod);
+}
 void AlarmTask::execute() {
   //The green led LB  is turned off and the red led LC is on (without blinking)
-  
+
   /*
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
-
+  this->humanTask->setActive(true);
   //if button pressed HumanControllerTask->active
   /*if(!HumanControllerTask->isActive() )
+  if (this->humanTask->isReady()) {
+    this->humanTask->execute();
+  }
   The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), whose value linearly depends on the the current water level, WL2 and WLMAX (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX). The opening of the valve changes dynamically depending on the current water level
   */
 }
@@ -56,7 +62,8 @@ void AlarmTask::execute() {
 void HumanControllerTask::init(int period) {
   Task::init(period);
 }
-void HumanControllerTask::execute() {
+void HumanControllerTask::routine() {
+  //check button
 }
 
 
@@ -67,12 +74,17 @@ void HumanControllerTask::execute() {
 
 void LigthningSubSystemTask::setBlinkingPin(int pin) {
   this->pin = pin;
+  this->blinking = new BlinkTask(pin);
 }
-
+bool LigthningSubSystemTask::updateAndCheckTime(int basePeriod) {
+  Task::updateAndCheckTime(basePeriod);
+  this->blinking->updateAndCheckTime(basePeriod);
+}
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
-  this->led = new Led(this->pin);
   this->state = OFF;
+  this->blinking = new BlinkTask(this->pin);  //blinking led
+  this->blinking->init(2000);                 //led blink of 2seconds
 }
 
 void LigthningSubSystemTask::execute() {
@@ -84,14 +96,7 @@ void LigthningSubSystemTask::execute() {
       }  
     F-> off
   */
-  switch (state) {
-    case OFF:
-      this->led->switchOn();
-      this->state = ON;
-      break;
-    case ON:  //detected someone
-      this->led->switchOff();
-      this->state = OFF;
-      break;
+  if (this->blinking->isReady()) {
+    this->blinking->execute();
   }
 }
