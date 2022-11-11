@@ -3,6 +3,7 @@
 #include "Task.h"
 
 class BridgeTask : public Task {
+  protected:
   double waterLevel;
 public:
   virtual void updateWaterLevel(double waterLevel);

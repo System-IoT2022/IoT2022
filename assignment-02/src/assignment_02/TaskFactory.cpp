@@ -13,12 +13,30 @@ void NormalTask::updateWaterLevel(double waterLevel){};
 
 
 
+
+
 void PreAlarmTask::init(int period) {
   Task::init(period);
+  this->state = OFF;
+  this->blinking = new BlinkTask(this->pin);  //blinking led LC
+  this->blinking->init(2000);                 //led blink of 2seconds
 }
+void PreAlarmTask::setBlinkingPin(int pin) {
+  this->pin = pin;
+  this->blinking = new BlinkTask(pin);
+}
+bool PreAlarmTask::updateAndCheckTime(int basePeriod) {
+  Task::updateAndCheckTime(basePeriod);
+  this->blinking->updateAndCheckTime(basePeriod);
+}
+
 void PreAlarmTask::execute() {
   //The red led LC starts blinking with a period of 2 seconds.
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
+  //BridgeTask::waterLevel;
+  if (this->blinking->isReady()) {
+    this->blinking->execute();
+  }
 }
 
 
@@ -34,11 +52,11 @@ void AlarmTask::setActive(bool active) {
   }
   Task::setActive(false);
 }
-
 bool AlarmTask::updateAndCheckTime(int basePeriod) {
   BridgeTask::updateAndCheckTime(basePeriod);
   this->humanTask->updateAndCheckTime(basePeriod);
 }
+
 void AlarmTask::execute() {
   //The green led LB  is turned off and the red led LC is on (without blinking)
 
@@ -63,7 +81,7 @@ void HumanControllerTask::init(int period) {
   Task::init(period);
 }
 void HumanControllerTask::routine() {
-  //check button
+  //check button for river flow control
 }
 
 
@@ -72,31 +90,23 @@ void HumanControllerTask::routine() {
 
 
 
-void LigthningSubSystemTask::setBlinkingPin(int pin) {
-  this->pin = pin;
-  this->blinking = new BlinkTask(pin);
-}
-bool LigthningSubSystemTask::updateAndCheckTime(int basePeriod) {
-  Task::updateAndCheckTime(basePeriod);
-  this->blinking->updateAndCheckTime(basePeriod);
-}
+
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
-  this->state = OFF;
-  this->blinking = new BlinkTask(this->pin);  //blinking led
-  this->blinking->init(2000);                 //led blink of 2seconds
 }
 
 void LigthningSubSystemTask::execute() {
+  //detected someone
   /*check pir[T,F]=> 
     T->
-      check ligth[T,F]{
-        T->led on
+    {
+      lastDetection= NOW()
+      check ligth[ligthLevel < LIGTHTHRESHOLD]{
+        T->led LA on
         F->off
-      }  
-    F-> off
+      } 
+    }else{
+      after lastDetection-time()>T1 time led LA-> off
+    }
   */
-  if (this->blinking->isReady()) {
-    this->blinking->execute();
-  }
 }
