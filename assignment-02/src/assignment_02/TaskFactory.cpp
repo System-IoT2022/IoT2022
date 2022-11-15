@@ -3,7 +3,7 @@
 
 LightSensor* lightSensor; 
 Pir* pir;
-Light
+Led* ledA;
 
 
 void NormalTask::init(int period) {
@@ -105,6 +105,7 @@ void LigthningSubSystemTask::init(int period) {
   Task::init(period);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   pir = new PirImpl(PIR_PIN);
+  ledA = new Led(LED_LA_PIN);
 }
 
 void LigthningSubSystemTask::execute() {
@@ -122,5 +123,9 @@ void LigthningSubSystemTask::execute() {
     }
   */
   //Serial.println(lightSensor->getLightIntensity());
-  pir->isDetected();  
+  if(pir->isDetected()){
+    ledA->switchOn();
+  }else{
+    ledA->switchOff();
+  }
 }

@@ -19,6 +19,7 @@ bool PirImpl::isDetected(){
   if (current != detectedStatus ){
     detectedStatus = current;
     print(current);
+    return true;
   }
-  return current;
+  return false;
 }
