@@ -34,9 +34,14 @@ void PreAlarmTask::execute() {
   //The red led LC starts blinking with a period of 2 seconds.
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
   //BridgeTask::waterLevel;
-  if (this->blinking->isReady()) {
-    this->blinking->execute();
+  
+}
+
+void PreAlarmTask::setActive(bool active) {
+  if (!active) {
+    this->blinking->setActive(false);
   }
+  Task::setActive(false);
 }
 
 
@@ -80,7 +85,7 @@ void AlarmTask::execute() {
 void HumanControllerTask::init(int period) {
   Task::init(period);
 }
-void HumanControllerTask::routine() {
+void HumanControllerTask::execute() {
   //check button for river flow control
 }
 

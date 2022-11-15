@@ -11,7 +11,7 @@ void BlinkTask::init(int period){
   state = OFF;    
 }
   
-void BlinkTask::routine(){
+void BlinkTask::execute(){
   switch (state){
     case OFF:
       led->switchOn();

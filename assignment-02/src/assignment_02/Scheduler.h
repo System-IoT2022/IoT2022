@@ -4,17 +4,20 @@
 #include "Task.h"
 
 #define MAX_TASKS 50
-
+/* TO-DO
+  create scheduler constructor as static, 
+  and using reference instance instead of 
+  method static in all of the program 
+*/
 class Scheduler {
-  
-  int basePeriod;
-  int nTasks;
-  Task* taskList[MAX_TASKS];  
-
+  static int basePeriod;
+  static int nTasks;
+  static Task* taskList[MAX_TASKS];
+  Scheduler(){};//static
 public:
-  void init(int basePeriod);  
-  virtual bool addTask(Task* task);  
-  virtual void schedule();  
+  static void init(int basePeriod);
+  static bool addTask(Task* task);
+  static void schedule();
 };
 
 #endif

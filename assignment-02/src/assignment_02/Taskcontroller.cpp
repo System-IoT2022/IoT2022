@@ -1,4 +1,5 @@
 #include "Taskcontroller.h"
+#include "Scheduler.h"
 #define MAX_TASKS 10
 #define NORMALCHECK 1000
 #define PREALARMCHECK 500
@@ -11,17 +12,18 @@
 
 bool TaskController::addTask(BridgeTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
-    taskList[this->nTasks] = task;
-    nTasks++;
-    return true;
-  } else {
-    return false;
+    if (Scheduler::addTask(task)) {
+      taskList[this->nTasks] = task;
+      nTasks++;
+      return true;
+    }
   }
+  return false;
 }
 
 void TaskController::init(int period) {
   Task::init(period);
-  BridgeTask* t0 = new NormalTask();//create constructor for LB pin and LC pin
+  BridgeTask* t0 = new NormalTask();  //create constructor for LB pin and LC pin
   this->addTask(t0);
   t0->init(NORMALCHECK);
 
@@ -35,7 +37,7 @@ void TaskController::init(int period) {
   this->setActive(true);
 }
 void TaskController::execute() {
-  
+
   STATE newstate;
 
   //check sonar distance
@@ -55,7 +57,7 @@ void TaskController::execute() {
   }
   if (newstate != this->waterState) {
     this->taskList[this->waterState]->setActive(false);
-    this->waterState=newstate;
+    this->waterState = newstate;
     switch (this->waterState) {
       case ALARM:
         this->taskList[ALARM]->setActive(true);
@@ -74,6 +76,6 @@ void TaskController::execute() {
 Task** TaskController::getTask() {
   return this->taskList;
 }
-int TaskController::getNTask(){
+int TaskController::getNTask() {
   return this->nTasks;
 }

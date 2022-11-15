@@ -2,25 +2,19 @@
 #include "Taskcontroller.h"
 #include "TaskFactory.h"
 
-Scheduler sched;
-
 void setup(){
 
   Serial.begin(9600);
-  sched.init(250);
+  Scheduler::init(250);
   TaskController* t0 = new TaskController();
   t0->init(0);
-  sched.addTask(t0);
+  Scheduler::addTask(t0);
 
   Task* t1 = new LigthningSubSystemTask();
   t1->init(1000);
-  sched.addTask(t1);
-  Task** vec = t0->getTask();
-  for(int i=0;i<t0->getNTask();i++){
-    sched.addTask(vec[i]);
-  }
+  Scheduler::addTask(t1);
 }
 
 void loop(){
-  sched.schedule();
+  Scheduler::schedule();
 }

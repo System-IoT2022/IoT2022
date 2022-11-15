@@ -2,7 +2,6 @@
 #define __TASKFACTORY__
 #include "Task.h"
 #include "BlinkTask.h"
-#include "InnestedTask.h"
 #include "BridgeTask.h"
 
 
@@ -27,6 +26,7 @@ public:
   void init(int period);
   void setBlinkingPin(int pin);
   void execute();
+  void setActive(bool active);
   bool updateAndCheckTime(int basePeriod);
 };
 
@@ -51,10 +51,10 @@ public:
   void execute();
 };
 
-class HumanControllerTask : public InnestedTask {
+class HumanControllerTask : public Task {
 public:
   void init(int period);
-  void routine();
+  void execute();
 };
 
 
