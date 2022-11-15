@@ -8,6 +8,7 @@
 // #define __DEBUG__
 
 #include "LightSensorImpl.h"
+#include "Pirimpl.h"
 #include <Arduino.h>
 
 #define LED_LA 4
@@ -17,6 +18,7 @@
 #define LED_B 7
 #define POT_PIN A0
 #define LIGHT_SENSOR_PIN A1
+#define PIR_PIN 8
 
 
 #endif

@@ -2,6 +2,8 @@
 #include "Config.h"
 
 LightSensor* lightSensor; 
+Pir* pir;
+Light
 
 
 void NormalTask::init(int period) {
@@ -102,6 +104,7 @@ void HumanControllerTask::execute() {
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
+  pir = new PirImpl(PIR_PIN);
 }
 
 void LigthningSubSystemTask::execute() {
@@ -119,4 +122,5 @@ void LigthningSubSystemTask::execute() {
     }
   */
   //Serial.println(lightSensor->getLightIntensity());
+  pir->isDetected();  
 }
