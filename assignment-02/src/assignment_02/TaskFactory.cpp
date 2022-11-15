@@ -1,4 +1,7 @@
 #include "TaskFactory.h"
+#include "Config.h"
+
+LightSensor* lightSensor; 
 
 
 void NormalTask::init(int period) {
@@ -98,6 +101,7 @@ void HumanControllerTask::execute() {
 
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
+  lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
 }
 
 void LigthningSubSystemTask::execute() {
@@ -114,4 +118,5 @@ void LigthningSubSystemTask::execute() {
       after lastDetection-time()>T1 time led LA-> off
     }
   */
+  //Serial.println(lightSensor->getLightIntensity());
 }

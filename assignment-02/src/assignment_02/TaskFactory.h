@@ -4,9 +4,6 @@
 #include "BlinkTask.h"
 #include "BridgeTask.h"
 
-
-
-
 class NormalTask : public BridgeTask {
 public:
   void init(int period);
