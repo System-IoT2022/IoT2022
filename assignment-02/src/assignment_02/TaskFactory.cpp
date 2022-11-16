@@ -4,6 +4,12 @@
 LightSensor* lightSensor; 
 Pir* pir;
 Led* ledA;
+SonarSensor* sonar;
+ServoMotor* pMotor; 
+int pos = 0;
+int delta = 1;
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27,20,4); 
+
 
 
 void NormalTask::init(int period) {
@@ -106,6 +112,10 @@ void LigthningSubSystemTask::init(int period) {
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   pir = new PirImpl(PIR_PIN);
   ledA = new Led(LED_LA_PIN);
+  sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
+  pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
+  lcd.init();
+  lcd.backlight();
 }
 
 void LigthningSubSystemTask::execute() {
@@ -123,9 +133,23 @@ void LigthningSubSystemTask::execute() {
     }
   */
   //Serial.println(lightSensor->getLightIntensity());
-  if(pir->isDetected()){
+  /*if(pir->isDetected()){
     ledA->switchOn();
   }else{
     ledA->switchOff();
+  }*/
+  Serial.println(sonar->getDistance());
+  //pMotor->on();
+  /*for (int i = 0; i < 180; i++) {
+    Serial.println(pos);
+    pMotor->setPosition(pos);         
+    // delay(2);            
+    pos += delta;
   }
+  pMotor->off();
+  pos -= delta;
+  delta = -delta;
+  delay(1000); */
+   //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
+  //lcd.print("Dammi soldi!");
 }
