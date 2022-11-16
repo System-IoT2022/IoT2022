@@ -4,6 +4,8 @@
 SonarImpl::SonarImpl(const int trigPin, const int echoPin){
   this->trigPin = trigPin;
   this->echoPin = echoPin;
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT); 
 }
 
 float SonarImpl::getDistance(){

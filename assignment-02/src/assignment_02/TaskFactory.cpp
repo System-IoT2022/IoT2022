@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "TaskFactory.h"
 #include "Config.h"
 
@@ -116,6 +117,8 @@ void LigthningSubSystemTask::init(int period) {
   pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   lcd.init();
   lcd.backlight();
+  pMotor->on();
+  pMotor->setPosition(0);
 }
 
 void LigthningSubSystemTask::execute() {
@@ -138,18 +141,14 @@ void LigthningSubSystemTask::execute() {
   }else{
     ledA->switchOff();
   }*/
-  Serial.println(sonar->getDistance());
+  
+  int val = analogRead(POT_PIN);
+   val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
   //pMotor->on();
-  /*for (int i = 0; i < 180; i++) {
-    Serial.println(pos);
-    pMotor->setPosition(pos);         
-    // delay(2);            
-    pos += delta;
-  }
-  pMotor->off();
-  pos -= delta;
-  delta = -delta;
-  delay(1000); */
+  pMotor->setPosition(180-val); 
+  //pMotor->off();
+  Serial.println(sonar->getDistance());
+  delay(1000);
    //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
   //lcd.print("Dammi soldi!");
 }

@@ -1,5 +1,3 @@
-#include <LiquidCrystal.h>
-
 /*
  *  This header file stores symbols that concerns 
  *  the configuration of the system.
@@ -26,8 +24,8 @@
 #define POT_PIN A0
 #define LIGHT_SENSOR_PIN A1
 
-#define SONAR_TRIG_PIN 9
-#define SONAR_ECHO_PIN 10
+#define SONAR_ECHO_PIN 9  
+#define SONAR_TRIG_PIN 10
 #define SERVO_MOTOR_PIN 11
 
 
