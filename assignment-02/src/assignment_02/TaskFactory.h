@@ -48,6 +48,12 @@ public:
   void execute();
 };
 
+class TurnOnLedForSecondsTask : public Task {
+    void init(int period);
+    void execute();
+    void setActive(bool active);
+};
+
 class HumanControllerTask : public Task {
 public:
   void init(int period);

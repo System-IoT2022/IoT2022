@@ -1,15 +1,21 @@
 #include "Arduino.h"
 #include "TaskFactory.h"
 #include "Config.h"
+#include "Scheduler.h"
 
-LightSensor* lightSensor; 
+#define THL 30  //thresh hold for light sensor
+#define T1 2000 // 2 seconds
+
+LightSensor* lightSensor;
 Pir* pir;
 Led* ledA;
 SonarSensor* sonar;
-ServoMotor* pMotor; 
+ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
-LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27,20,4); 
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
+Task* ledATask = new TurnOnLedForSecondsTask();
+
 
 
 
@@ -46,7 +52,6 @@ void PreAlarmTask::execute() {
   //The red led LC starts blinking with a period of 2 seconds.
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
   //BridgeTask::waterLevel;
-  
 }
 
 void PreAlarmTask::setActive(bool active) {
@@ -103,13 +108,30 @@ void HumanControllerTask::execute() {
 
 
 
+void TurnOnLedForSecondsTask::init(int period) {
+  Task::init(period);
+}
 
+void TurnOnLedForSecondsTask::execute() {
+  this->setActive(false);
+}
+
+void TurnOnLedForSecondsTask::setActive(bool active) {
+  //thing that will be executed
+  Task::setActive(active);
+  if (active == false) {
+    ledA->switchOff();
+  } else {
+    ledA->switchOn();
+  }
+}
 
 
 
 
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
+  /*
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   pir = new PirImpl(PIR_PIN);
   ledA = new Led(LED_LA_PIN);
@@ -118,37 +140,26 @@ void LigthningSubSystemTask::init(int period) {
   lcd.init();
   lcd.backlight();
   pMotor->on();
-  pMotor->setPosition(0);
+  pMotor->setPosition(0);*/
+
+  ledATask->init(T1);
+  ledATask->setActive(true);
+  Serial.println(Scheduler::addTask(ledATask));
+
 }
 
 void LigthningSubSystemTask::execute() {
-  //detected someone
-  /*check pir[T,F]=> 
-    T->
-    {
-      lastDetection= NOW()
-      check ligth[ligthLevel < LIGTHTHRESHOLD]{
-        T->led LA on
-        F->off
-      } 
-    }else{
-      after lastDetection-time()>T1 time led LA-> off
-    }
-  */
-  //Serial.println(lightSensor->getLightIntensity());
-  /*if(pir->isDetected()){
-    ledA->switchOn();
-  }else{
-    ledA->switchOff();
-  }*/
-  
-  int val = analogRead(POT_PIN);
-   val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
+
+  if (pir->isDetected() && lightSensor->getLightIntensity() <= THL) {
+    ledATask->setActive(true);
+  }
+  //int val = analogRead(POT_PIN);
+  //val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
   //pMotor->on();
-  pMotor->setPosition(180-val); 
+  //pMotor->setPosition(180 - val);
   //pMotor->off();
-  Serial.println(sonar->getDistance());
-  delay(1000);
-   //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
+  //Serial.println(sonar->getDistance());
+  //delay(1000);
+  //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
   //lcd.print("Dammi soldi!");
 }
