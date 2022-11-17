@@ -39,9 +39,9 @@
 #define T1 2000 // 2 seconds
 
 //to do
-#define ALARMWATERLEVEL 1
-#define PREALARMWATERLEVEL 1
 #define NORMALWATERLEVEL 1
+#define PREALARMWATERLEVEL 0.30
+#define ALARMWATERLEVEL 0.05
 
 
 #endif

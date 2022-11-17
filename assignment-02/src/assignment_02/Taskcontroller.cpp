@@ -33,19 +33,21 @@ void TaskController::init(int period) {
   smartLightSystem->init(T1);
   smartLightSystem->setActive(true);
   this->addTask(smartLightSystem);
+
+  this->sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
 }
 void TaskController::execute() {
 
   STATE newstate;
 
-  //check sonar distance
+  //check sonar
+  float level = sonar->getDistance();
 
-  int level = 0;
-  if (level >= ALARMWATERLEVEL) {
+  if (level <= ALARMWATERLEVEL) {
     newstate = ALARM;
     Task::changeFrequency(NORMALCHECK);
   } else {
-    if (level >= PREALARMWATERLEVEL) {
+    if (level <= PREALARMWATERLEVEL) {
       newstate = PREALARM;
       Task::changeFrequency(PREALARMCHECK);
     } else {
@@ -53,7 +55,11 @@ void TaskController::execute() {
       Task::changeFrequency(ALARMCHECK);
     }
   }
+
+    Serial.println(newstate);
   if (newstate != this->waterState) {
+    Serial.flush();
+    Serial.println("nuovo stato");
     this->taskList[this->waterState]->setActive(false);
     this->waterState = newstate;
     switch (this->waterState) {
@@ -72,6 +78,7 @@ void TaskController::execute() {
     }
   }
   this->taskList[this->waterState]->updateWaterLevel(level);
+  Serial.flush();
   return;
 }
 Task** TaskController::getTask() {

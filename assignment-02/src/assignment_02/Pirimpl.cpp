@@ -18,7 +18,7 @@ bool PirImpl::isDetected(){
    int current = digitalRead(this->pin);
   if (current != detectedStatus ){
     detectedStatus = current;
-    print(current);
+    //print(current);
   }
   return detectedStatus;
 }

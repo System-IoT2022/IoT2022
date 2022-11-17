@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "SonarImpl.h"
 #include "Arduino.h"
 

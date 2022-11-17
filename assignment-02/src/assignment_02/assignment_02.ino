@@ -7,7 +7,7 @@ void setup(){
   Scheduler::init(250);
   TaskController* t0 = new TaskController();
   t0->init(0);
-  //Scheduler::addTask(t0);
+  Scheduler::addTask(t0);
 
 }
 

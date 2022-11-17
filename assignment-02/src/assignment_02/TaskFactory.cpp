@@ -4,10 +4,11 @@
 #include "Scheduler.h"
 
 
-SonarSensor* sonar;
 //ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
+Led* ledB = new Led(LED_LB_PIN);
+Led* ledC = new Led(LED_LC_PIN);
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 
 
@@ -16,10 +17,13 @@ void NormalTask::init(int period) {
 }
 void NormalTask::execute() {
   // the green led LB is on and LC is off – it means that the bridge can be used.
-  
+  ledB->switchOn();
+  ledC->switchOff();
+  Serial.println("ciao");
 }
 
-void NormalTask::updateWaterLevel(double waterLevel){};
+void NormalTask::updateWaterLevel(double waterLevel){
+};
 
 void PreAlarmTask::init(int period) {
   Task::init(period);
@@ -116,7 +120,6 @@ void LigthningSubSystemTask::init(int period) {
   pir = new PirImpl(PIR_PIN);
   /*
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
   pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   lcd.init();
   lcd.backlight();
@@ -127,7 +130,7 @@ void LigthningSubSystemTask::init(int period) {
   this->ledATask = new TurnOnLedForSecondsTask();
   this->ledATask->init(T1);
   this->ledATask->setActive(true);
-  Serial.println(Scheduler::addTask(this->ledATask));
+  Scheduler::addTask(this->ledATask);
 
 }
 

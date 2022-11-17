@@ -6,7 +6,9 @@
 #include "Config.h"
 
 class NormalTask : public BridgeTask {
-public:
+  private:
+    Led* ledA;
+  public:
   void init(int period);
   void execute();
   void updateWaterLevel(double waterLevel);
@@ -59,10 +61,6 @@ class TurnOnLedForSecondsTask : public Task {
   void execute();
   void setActive(bool active);
 };
-
-class SampleWaterLevelTask : public Task{
-  
-}
 
 class HumanControllerTask : public Task {
 public:

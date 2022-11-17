@@ -10,7 +10,8 @@ private:
   bool addTask(BridgeTask* task);
   BridgeTask* taskList[MAX_TASKS];
   Task* smartLightSystem;
-  
+  SonarSensor* sonar;
+
   enum STATE{ NORMAL,
          PREALARM,
          ALARM } ;
