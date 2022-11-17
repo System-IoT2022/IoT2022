@@ -15,6 +15,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Arduino.h>
 
+/*pin of sensors*/
 #define LED_LA_PIN 4
 #define LED_LB_PIN 5
 #define LED_LC_PIN 6
@@ -27,6 +28,20 @@
 #define SONAR_ECHO_PIN 9  
 #define SONAR_TRIG_PIN 10
 #define SERVO_MOTOR_PIN 11
+
+
+/*project configurations*/
+#define MAX_TASKS 10
+#define NORMALCHECK 1000
+#define PREALARMCHECK 500
+#define ALARMCHECK 250
+#define THL 30  //thresh hold for light sensor
+#define T1 2000 // 2 seconds
+
+//to do
+#define ALARMWATERLEVEL 1
+#define PREALARMWATERLEVEL 1
+#define NORMALWATERLEVEL 1
 
 
 #endif

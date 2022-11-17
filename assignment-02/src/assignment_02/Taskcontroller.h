@@ -8,12 +8,14 @@ class TaskController : public Task {
 private:
   int nTasks = 0;
   bool addTask(BridgeTask* task);
+  BridgeTask* taskList[MAX_TASKS];
+  Task* smartLightSystem;
+  
   enum STATE{ NORMAL,
          PREALARM,
          ALARM } ;
   STATE waterState;
 public:
-  BridgeTask* taskList[MAX_TASKS];
   void init(int period);
   void execute();
   Task** getTask();

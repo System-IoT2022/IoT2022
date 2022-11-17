@@ -9,10 +9,6 @@ void setup(){
   t0->init(0);
   //Scheduler::addTask(t0);
 
-  Task* t1 = new LigthningSubSystemTask();
-  t1->init(1000);
-  t1->setActive(true);
-  Scheduler::addTask(t1);
 }
 
 void loop(){

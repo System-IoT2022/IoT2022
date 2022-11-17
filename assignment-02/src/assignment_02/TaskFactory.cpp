@@ -3,20 +3,12 @@
 #include "Config.h"
 #include "Scheduler.h"
 
-#define THL 30  //thresh hold for light sensor
-#define T1 2000 // 2 seconds
 
-LightSensor* lightSensor;
-Pir* pir;
-Led* ledA;
 SonarSensor* sonar;
-ServoMotor* pMotor;
+//ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
-Task* ledATask = new TurnOnLedForSecondsTask();
-
-
 
 
 void NormalTask::init(int period) {
@@ -24,14 +16,10 @@ void NormalTask::init(int period) {
 }
 void NormalTask::execute() {
   // the green led LB is on and LC is off – it means that the bridge can be used.
+  
 }
 
 void NormalTask::updateWaterLevel(double waterLevel){};
-
-
-
-
-
 
 void PreAlarmTask::init(int period) {
   Task::init(period);
@@ -60,8 +48,6 @@ void PreAlarmTask::setActive(bool active) {
   }
   Task::setActive(false);
 }
-
-
 
 
 void AlarmTask::init(int period) {
@@ -95,10 +81,6 @@ void AlarmTask::execute() {
   */
 }
 
-
-
-
-
 void HumanControllerTask::init(int period) {
   Task::init(period);
 }
@@ -107,9 +89,9 @@ void HumanControllerTask::execute() {
 }
 
 
-
 void TurnOnLedForSecondsTask::init(int period) {
   Task::init(period);
+   this->ledA = new Led(LED_LA_PIN);
 }
 
 void TurnOnLedForSecondsTask::execute() {
@@ -120,9 +102,9 @@ void TurnOnLedForSecondsTask::setActive(bool active) {
   //thing that will be executed
   Task::setActive(active);
   if (active == false) {
-    ledA->switchOff();
+    this->ledA->switchOff();
   } else {
-    ledA->switchOn();
+    this->ledA->switchOn();
   }
 }
 
@@ -131,27 +113,28 @@ void TurnOnLedForSecondsTask::setActive(bool active) {
 
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
+  pir = new PirImpl(PIR_PIN);
   /*
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  pir = new PirImpl(PIR_PIN);
-  ledA = new Led(LED_LA_PIN);
   sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
   pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   lcd.init();
   lcd.backlight();
   pMotor->on();
   pMotor->setPosition(0);*/
-
-  ledATask->init(T1);
-  ledATask->setActive(true);
-  Serial.println(Scheduler::addTask(ledATask));
+  this->lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
+  this->pir = new PirImpl(PIR_PIN);
+  this->ledATask = new TurnOnLedForSecondsTask();
+  this->ledATask->init(T1);
+  this->ledATask->setActive(true);
+  Serial.println(Scheduler::addTask(this->ledATask));
 
 }
 
 void LigthningSubSystemTask::execute() {
 
-  if (pir->isDetected() && lightSensor->getLightIntensity() <= THL) {
-    ledATask->setActive(true);
+  if (pir->isDetected() && this->lightSensor->getLightIntensity() <= THL) {
+    this->ledATask->setActive(true);
   }
   //int val = analogRead(POT_PIN);
   //val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)

@@ -1,13 +1,6 @@
 #include "Taskcontroller.h"
 #include "Scheduler.h"
-#define MAX_TASKS 10
-#define NORMALCHECK 1000
-#define PREALARMCHECK 500
-#define ALARMCHECK 250
-#define NORMALWATERLEVEL 1
-#define PREALARMWATERLEVEL 1
-#define ALARMWATERLEVEL 1
-
+#include "Config.h"
 
 
 bool TaskController::addTask(BridgeTask* task) {
@@ -35,6 +28,11 @@ void TaskController::init(int period) {
   t2->init(ALARMCHECK);
   this->addTask(t2);
   this->setActive(true);
+
+  Task* smartLightSystem = new LigthningSubSystemTask();
+  smartLightSystem->init(T1);
+  smartLightSystem->setActive(true);
+  this->addTask(smartLightSystem);
 }
 void TaskController::execute() {
 
@@ -61,12 +59,15 @@ void TaskController::execute() {
     switch (this->waterState) {
       case ALARM:
         this->taskList[ALARM]->setActive(true);
+        this->smartLightSystem->setActive(false);
         break;
       case PREALARM:
         this->taskList[PREALARM]->setActive(true);
+        this->smartLightSystem->setActive(true);
         break;
       case NORMAL:
         this->taskList[NORMAL]->setActive(true);
+        this->smartLightSystem->setActive(true);
         break;
     }
   }
