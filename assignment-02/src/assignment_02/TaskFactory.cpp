@@ -5,10 +5,10 @@
 #include "Scheduler.h"
 
 
-//ServoMotor* pMotor;
+//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
+ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
-//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 
 //needs to be global only for attach to the pin2 interrupt
 void setInterruptTask();
@@ -55,17 +55,20 @@ void PreAlarmTask::setActive(bool active) {
 
 void AlarmTask::init(int period) {
   Task::init(period);
-  this->humanTask = new HumanControllerTask();
+  this->humanTask = new HumanControllerTask(pMotor);
   interruptTask = this;
   subInterruptTask = this->humanTask;
   this->ledC = new Led(LED_LC_PIN);
   this->ledB = new Led(LED_LB_PIN);
+  this->humanTask->init(PERIOD);
+  Scheduler::addTask(this->humanTask);
   //not working, need to find another method
   //attachInterrupt(digitalPinToInterrupt(BUTTON_B_PIN), setInterruptTask , RISING);
 }
 void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
+     this->humanTask->setActive(true);
   } else {
     this->humanTask->setActive(false);
     this->ledB->switchOff();
@@ -106,16 +109,25 @@ void setInterruptTask() {  //not working interrupt
 
 
 
+HumanControllerTask::HumanControllerTask(ServoMotor* pMotor){
+  this->pMotor = pMotor;
+}
 
 void HumanControllerTask::init(int period) {
   Task::init(period);
+  this->pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
 }
 void HumanControllerTask::execute() {
   //check potentiometer for motor
+  int val = analogRead(POT_PIN);
+  val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
+  this->pMotor->setPosition(val);
 }
 
-
-
+void HumanControllerTask::setActive(bool active){
+  Task::setActive(active);
+  active ? this->pMotor->on() : this->pMotor->off();
+}
 
 
 
@@ -145,12 +157,8 @@ void LigthningSubSystemTask::init(int period) {
   Task::init(period);
   pir = new PirImpl(PIR_PIN);
   /*
-  lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   lcd.init();
-  lcd.backlight();
-  pMotor->on();
-  pMotor->setPosition(0);*/
+  lcd.backlight();*/
   this->lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   this->pir = new PirImpl(PIR_PIN);
   this->ledATask = new TurnOnLedForSecondsTask();

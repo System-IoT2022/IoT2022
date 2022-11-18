@@ -9,8 +9,7 @@
 class NormalTask : public BridgeTask {
 private:
   Led* ledA;
-
-Led* ledB;
+  Led* ledB;
 public:
   void init(int period);
   void execute();
@@ -64,9 +63,13 @@ public:
 };
 
 class HumanControllerTask : public Task {
+private:
+  ServoMotor* pMotor;
 public:
+  HumanControllerTask(ServoMotor* pMotor);
   void init(int period);
   void execute();
+  void setActive(bool active);
 };
 
 

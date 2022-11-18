@@ -45,5 +45,6 @@
 #define NORMAL 0
 #define PREALARM 1
 #define ALARM 2
+#define PERIOD 500
 
 #endif
