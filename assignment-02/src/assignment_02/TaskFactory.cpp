@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "Arduino.h"
 #include "TaskFactory.h"
 #include "Config.h"
@@ -7,37 +8,35 @@
 //ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
-Led* ledB = new Led(LED_LB_PIN);
-Led* ledC = new Led(LED_LC_PIN);
-LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
+//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 
+//needs to be global only for attach to the pin2 interrupt
+void setInterruptTask();
+Task* interruptTask;
+Task* subInterruptTask;
 
 void NormalTask::init(int period) {
   Task::init(period);
+  this->ledB = new Led(LED_LB_PIN);
 }
 void NormalTask::execute() {
+
   // the green led LB is on and LC is off – it means that the bridge can be used.
-  ledB->switchOn();
-  ledC->switchOff();
-  Serial.println("ciao");
 }
 
-void NormalTask::updateWaterLevel(double waterLevel){
-};
+void NormalTask::updateWaterLevel(double waterLevel){};
+void NormalTask::setActive(bool active) {
+  Task::setActive(active);
+
+  active ? this->ledB->switchOn() : this->ledB->switchOff();
+}
+
 
 void PreAlarmTask::init(int period) {
   Task::init(period);
-  this->state = OFF;
-  this->blinking = new BlinkTask(this->pin);  //blinking led LC
-  this->blinking->init(2000);                 //led blink of 2seconds
-}
-void PreAlarmTask::setBlinkingPin(int pin) {
-  this->pin = pin;
-  this->blinking = new BlinkTask(pin);
-}
-bool PreAlarmTask::updateAndCheckTime(int basePeriod) {
-  Task::updateAndCheckTime(basePeriod);
-  this->blinking->updateAndCheckTime(basePeriod);
+  this->blinking = new BlinkTask(LED_LC_PIN);  //blinking led LC
+  this->blinking->init(1000);                  //led blink of 2seconds
+  Scheduler::addTask(this->blinking);
 }
 
 void PreAlarmTask::execute() {
@@ -47,55 +46,82 @@ void PreAlarmTask::execute() {
 }
 
 void PreAlarmTask::setActive(bool active) {
-  if (!active) {
-    this->blinking->setActive(false);
-  }
-  Task::setActive(false);
+
+  this->blinking->setActive(active);
+
+  Task::setActive(active);
 }
 
 
 void AlarmTask::init(int period) {
   Task::init(period);
   this->humanTask = new HumanControllerTask();
+  interruptTask = this;
+  subInterruptTask = this->humanTask;
+  this->ledC = new Led(LED_LC_PIN);
+  this->ledB = new Led(LED_LB_PIN);
+  //not working, need to find another method
+  //attachInterrupt(digitalPinToInterrupt(BUTTON_B_PIN), setInterruptTask , RISING);
 }
 void AlarmTask::setActive(bool active) {
-  if (!active) {
+  if (active) {
+    this->ledC->switchOn();
+  } else {
     this->humanTask->setActive(false);
-  }
-  Task::setActive(false);
-}
-bool AlarmTask::updateAndCheckTime(int basePeriod) {
-  BridgeTask::updateAndCheckTime(basePeriod);
-  this->humanTask->updateAndCheckTime(basePeriod);
+    this->ledB->switchOff();
+    this->ledC->switchOff();
+  }  //this->ledB->switchOn()
+  Task::setActive(active);
 }
 
 void AlarmTask::execute() {
-  //The green led LB  is turned off and the red led LC is on (without blinking)
-
   /*
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
-  this->humanTask->setActive(true);
   //if button pressed HumanControllerTask->active
-  /*if(!HumanControllerTask->isActive() )
-  if (this->humanTask->isReady()) {
-    this->humanTask->execute();
-  }
-  The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), whose value linearly depends on the the current water level, WL2 and WLMAX (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX). The opening of the valve changes dynamically depending on the current water level
+  if (!this->humanTask->isActive()) {
+    /*
+    The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
+    whose value linearly depends on the the current water level, WL2 and WLMAX 
+    (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX).
+    The opening of the valve changes dynamically depending on the current water level
+
+    otherwise the valve will be open by potentiometer in the humanTask
+
   */
+  }
 }
+
+long prevts = 0;
+void setInterruptTask() {  //not working interrupt
+  if (interruptTask->isActive()) {
+    subInterruptTask->setActive(true);
+  }
+  long ts = micros();
+  if (ts - prevts > 20000) {
+    prevts = ts;
+  }  //necessary for interrupt chain when bouncing
+}
+
+
+
+
 
 void HumanControllerTask::init(int period) {
   Task::init(period);
 }
 void HumanControllerTask::execute() {
-  //check button for river flow control
+  //check potentiometer for motor
 }
+
+
+
+
 
 
 void TurnOnLedForSecondsTask::init(int period) {
   Task::init(period);
-   this->ledA = new Led(LED_LA_PIN);
+  this->ledA = new Led(LED_LA_PIN);
 }
 
 void TurnOnLedForSecondsTask::execute() {
@@ -105,7 +131,7 @@ void TurnOnLedForSecondsTask::execute() {
 void TurnOnLedForSecondsTask::setActive(bool active) {
   //thing that will be executed
   Task::setActive(active);
-  if (active == false) {
+  if (!active) {
     this->ledA->switchOff();
   } else {
     this->ledA->switchOn();
@@ -131,7 +157,6 @@ void LigthningSubSystemTask::init(int period) {
   this->ledATask->init(T1);
   this->ledATask->setActive(true);
   Scheduler::addTask(this->ledATask);
-
 }
 
 void LigthningSubSystemTask::execute() {

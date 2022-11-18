@@ -27,57 +27,59 @@ void TaskController::init(int period) {
   Task* t2 = new AlarmTask();
   t2->init(ALARMCHECK);
   this->addTask(t2);
-  this->setActive(true);
 
-  Task* smartLightSystem = new LigthningSubSystemTask();
+  this->smartLightSystem = new LigthningSubSystemTask();
   smartLightSystem->init(T1);
   smartLightSystem->setActive(true);
-  this->addTask(smartLightSystem);
-
+  Scheduler::addTask(smartLightSystem);
   this->sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
+  this->waterState = 0;
+  t0->setActive(true);
+  this->setActive(true);
 }
 void TaskController::execute() {
-
-  STATE newstate;
+  int newstate;
 
   //check sonar
   float level = sonar->getDistance();
-
   if (level <= ALARMWATERLEVEL) {
     newstate = ALARM;
-    Task::changeFrequency(NORMALCHECK);
+    Task::changeFrequency(ALARMCHECK);
   } else {
     if (level <= PREALARMWATERLEVEL) {
       newstate = PREALARM;
       Task::changeFrequency(PREALARMCHECK);
     } else {
       newstate = NORMAL;
-      Task::changeFrequency(ALARMCHECK);
+      Task::changeFrequency(NORMALCHECK);
     }
   }
+  if (this->waterState != newstate) {
 
-    Serial.println(newstate);
-  if (newstate != this->waterState) {
-    Serial.flush();
-    Serial.println("nuovo stato");
-    this->taskList[this->waterState]->setActive(false);
-    this->waterState = newstate;
-    switch (this->waterState) {
+
+    switch (newstate) {
       case ALARM:
-        this->taskList[ALARM]->setActive(true);
         this->smartLightSystem->setActive(false);
+        this->taskList[ALARM]->setActive(true);
         break;
       case PREALARM:
-        this->taskList[PREALARM]->setActive(true);
         this->smartLightSystem->setActive(true);
+        this->taskList[PREALARM]->setActive(true);
         break;
       case NORMAL:
-        this->taskList[NORMAL]->setActive(true);
         this->smartLightSystem->setActive(true);
+        this->taskList[NORMAL]->setActive(true);
         break;
     }
+    this->taskList[this->waterState]->setActive(false);
+    this->taskList[newstate]->setActive(true);
+
+    this->taskList[newstate]->updateWaterLevel(level);
+    this->waterState = newstate;
   }
-  this->taskList[this->waterState]->updateWaterLevel(level);
+  
+
+  Serial.println(this->waterState);
   Serial.flush();
   return;
 }

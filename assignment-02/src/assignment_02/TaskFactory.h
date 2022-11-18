@@ -5,29 +5,28 @@
 #include "BridgeTask.h"
 #include "Config.h"
 
+
 class NormalTask : public BridgeTask {
-  private:
-    Led* ledA;
-  public:
+private:
+  Led* ledA;
+
+Led* ledB;
+public:
   void init(int period);
   void execute();
   void updateWaterLevel(double waterLevel);
+  void setActive(bool active);
 };
 
 
 
 class PreAlarmTask : public BridgeTask {
 private:
-  int pin = 0;
   BlinkTask* blinking;
-  enum { ON,
-         OFF } state;
 public:
   void init(int period);
-  void setBlinkingPin(int pin);
   void execute();
   void setActive(bool active);
-  bool updateAndCheckTime(int basePeriod);
 };
 
 
@@ -35,8 +34,10 @@ public:
 class AlarmTask : public BridgeTask {
 private:
   Task* humanTask;
+  Led* ledC;
+  Led* ledB;
+  void setHumanTask();
 public:
-  bool updateAndCheckTime(int basePeriod);
   void setActive(bool active);
   void init(int period);
   void execute();
@@ -54,9 +55,9 @@ public:
 };
 
 class TurnOnLedForSecondsTask : public Task {
-  private:
-    Led* ledA;
-  public:
+private:
+  Led* ledA;
+public:
   void init(int period);
   void execute();
   void setActive(bool active);

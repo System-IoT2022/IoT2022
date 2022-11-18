@@ -12,10 +12,11 @@ private:
   Task* smartLightSystem;
   SonarSensor* sonar;
 
-  enum STATE{ NORMAL,
-         PREALARM,
-         ALARM } ;
-  STATE waterState;
+  /*assign enum to waterstate doesn't work runtime
+  enum STATE{ NORMAL=0,
+         PREALARM=1,
+         ALARM=2 } ;*/
+  int waterState;
 public:
   void init(int period);
   void execute();
