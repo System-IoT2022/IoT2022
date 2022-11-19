@@ -10,11 +10,6 @@ ServoMotor* pMotor;
 int pos = 0;
 int delta = 1;
 
-//needs to be global only for attach to the pin2 interrupt
-void setInterruptTask();
-Task* interruptTask;
-Task* subInterruptTask;
-
 void NormalTask::init(int period) {
   Task::init(period);
   this->ledB = new Led(LED_LB_PIN);
@@ -56,24 +51,21 @@ void PreAlarmTask::setActive(bool active) {
 void AlarmTask::init(int period) {
   Task::init(period);
   this->humanTask = new HumanControllerTask(pMotor);
-  interruptTask = this;
-  subInterruptTask = this->humanTask;
-  this->ledC = new Led(LED_LC_PIN);
-  this->ledB = new Led(LED_LB_PIN);
   this->humanTask->init(PERIOD);
   Scheduler::addTask(this->humanTask);
-  //not working, need to find another method
-  //attachInterrupt(digitalPinToInterrupt(BUTTON_B_PIN), setInterruptTask , RISING);
+  this->ledB = new Led(LED_LB_PIN);
+  this->ledC = new Led(LED_LC_PIN);
+  this->button = new ButtonImpl(BUTTON_B_PIN);
 }
 void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
-     this->humanTask->setActive(true);
   } else {
-    this->humanTask->setActive(false);
+    this->humanTask->setActive(active);
     this->ledB->switchOff();
     this->ledC->switchOff();
-  }  //this->ledB->switchOn()
+    this->button->setButtonState(false);
+  }
   Task::setActive(active);
 }
 
@@ -93,23 +85,12 @@ void AlarmTask::execute() {
 
   */
   }
-}
-
-long prevts = 0;
-void setInterruptTask() {  //not working interrupt
-  if (interruptTask->isActive()) {
-    subInterruptTask->setActive(true);
-  }
-  long ts = micros();
-  if (ts - prevts > 20000) {
-    prevts = ts;
-  }  //necessary for interrupt chain when bouncing
+    button->polling();
+    this->humanTask->setActive(button->isButtonPressed());
 }
 
 
-
-
-HumanControllerTask::HumanControllerTask(ServoMotor* pMotor){
+HumanControllerTask::HumanControllerTask(ServoMotor* pMotor) {
   this->pMotor = pMotor;
 }
 
@@ -124,7 +105,7 @@ void HumanControllerTask::execute() {
   this->pMotor->setPosition(val);
 }
 
-void HumanControllerTask::setActive(bool active){
+void HumanControllerTask::setActive(bool active) {
   Task::setActive(active);
   active ? this->pMotor->on() : this->pMotor->off();
 }

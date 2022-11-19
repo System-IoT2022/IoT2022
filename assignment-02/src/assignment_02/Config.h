@@ -14,6 +14,7 @@
 #include "servo_motor_impl.h"
 #include <LiquidCrystal.h>
 #include <Arduino.h>
+#include "ButtonImpl.h"
 
 /*pin of sensors*/
 #define LED_LA_PIN 4

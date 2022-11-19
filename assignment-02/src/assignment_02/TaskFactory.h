@@ -35,7 +35,7 @@ private:
   Task* humanTask;
   Led* ledC;
   Led* ledB;
-  void setHumanTask();
+  ButtonSensor *button;
 public:
   void setActive(bool active);
   void init(int period);
