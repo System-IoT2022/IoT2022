@@ -50,6 +50,7 @@ void PreAlarmTask::setActive(bool active) {
 
 void AlarmTask::init(int period) {
   Task::init(period);
+  pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   this->humanTask = new HumanControllerTask(pMotor);
   this->humanTask->init(PERIOD);
   Scheduler::addTask(this->humanTask);
@@ -85,24 +86,29 @@ void AlarmTask::execute() {
 
   */
   }
-    button->polling();
-    this->humanTask->setActive(button->isButtonPressed());
+  button->polling();
+  this->humanTask->setActive(button->isButtonPressed());
 }
 
 
 HumanControllerTask::HumanControllerTask(ServoMotor* pMotor) {
   this->pMotor = pMotor;
+  angleValue = analogRead(POT_PIN);
 }
 
 void HumanControllerTask::init(int period) {
   Task::init(period);
-  this->pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
 }
 void HumanControllerTask::execute() {
   //check potentiometer for motor
   int val = analogRead(POT_PIN);
-  val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
-  this->pMotor->setPosition(val);
+  if (val != angleValue) {
+    angleValue = val;
+    val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
+    this->pMotor->on();
+    this->pMotor->setPosition(val);
+    this->pMotor->off();
+  }
 }
 
 void HumanControllerTask::setActive(bool active) {

@@ -65,6 +65,7 @@ public:
 class HumanControllerTask : public Task {
 private:
   ServoMotor* pMotor;
+  int angleValue;
 public:
   HumanControllerTask(ServoMotor* pMotor);
   void init(int period);
