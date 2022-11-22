@@ -11,7 +11,6 @@ private:
   BridgeTask* taskList[MAX_TASKS];
   Task* smartLightSystem;
   SonarSensor* sonar;
-
   /*assign enum to waterstate doesn't work runtime
   enum STATE{ NORMAL=0,
          PREALARM=1,

@@ -6,9 +6,7 @@
 
 
 //LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
-ServoMotor* pMotor;
-int pos = 0;
-int delta = 1;
+ServoMotor* pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -48,24 +46,33 @@ void PreAlarmTask::setActive(bool active) {
 }
 
 
+
+static double rangeConverter(double value, double a1, double b1, double a2, double b2) {
+  return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
+}
+
 void AlarmTask::init(int period) {
   Task::init(period);
-  pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
   this->humanTask = new HumanControllerTask(pMotor);
+  this->humanTask->setActive(false);
   this->humanTask->init(PERIOD);
   Scheduler::addTask(this->humanTask);
   this->ledB = new Led(LED_LB_PIN);
   this->ledC = new Led(LED_LC_PIN);
   this->button = new ButtonImpl(BUTTON_B_PIN);
+  this->sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
 }
+
 void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
+    pMotor->on();
   } else {
     this->humanTask->setActive(active);
     this->ledB->switchOff();
     this->ledC->switchOff();
     this->button->setButtonState(false);
+ //   pMotor->off();
   }
   Task::setActive(active);
 }
@@ -86,8 +93,14 @@ void AlarmTask::execute() {
 
   */
   }
-  button->polling();
-  this->humanTask->setActive(button->isButtonPressed());
+    float val = sonar->getDistance();
+    val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
+    val = max(val, 0);
+    val = min(val, 180);
+    Serial.println(val);
+    pMotor->setPosition(val);
+  //button->polling();
+  //this->humanTask->setActive(button->isButtonPressed());
 }
 
 
@@ -110,6 +123,7 @@ void HumanControllerTask::execute() {
     this->pMotor->off();
   }
 }
+
 
 void HumanControllerTask::setActive(bool active) {
   Task::setActive(active);

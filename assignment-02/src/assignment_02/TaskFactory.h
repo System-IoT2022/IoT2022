@@ -36,6 +36,7 @@ private:
   Led* ledC;
   Led* ledB;
   ButtonSensor *button;
+   SonarSensor* sonar;
 public:
   void setActive(bool active);
   void init(int period);

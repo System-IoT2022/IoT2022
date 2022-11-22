@@ -42,7 +42,8 @@
 //to do
 #define NORMALWATERLEVEL 1
 #define PREALARMWATERLEVEL 0.30
-#define ALARMWATERLEVEL 0.05
+#define ALARMWATERLEVEL 0.15
+#define WL_MAX 0.05
 #define NORMAL 0
 #define PREALARM 1
 #define ALARM 2
