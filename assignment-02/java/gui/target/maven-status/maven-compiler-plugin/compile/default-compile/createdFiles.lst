@@ -1,0 +1,7 @@
+module-info.class
+com\iot\GUIFactoryImpl.class
+com\iot\SerialCommChannel.class
+com\iot\CommChannel.class
+com\iot\App.class
+com\iot\GUIFactory.class
+com\iot\SerialParser.class
