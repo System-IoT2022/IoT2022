@@ -1,3 +1,5 @@
+#include <LiquidCrystal_I2C.h>
+
 #include "HardwareSerial.h"
 #include "Arduino.h"
 #include "TaskFactory.h"
@@ -5,7 +7,7 @@
 #include "Scheduler.h"
 
 
-//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 ServoMotor* pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
 
 void NormalTask::init(int period) {
@@ -67,12 +69,17 @@ void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
     pMotor->on();
+    lcd.init();
+    lcd.backlight();
+    //pMotor->setPosition(0);ssss
   } else {
     this->humanTask->setActive(active);
     this->ledB->switchOff();
     this->ledC->switchOff();
     this->button->setButtonState(false);
- //   pMotor->off();
+    pMotor->setPosition(0);
+    delay(500);  //although it's a delay, but we needed enough time to close the valve
+    pMotor->off();
   }
   Task::setActive(active);
 }
@@ -82,7 +89,11 @@ void AlarmTask::execute() {
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
   //if button pressed HumanControllerTask->active
-  if (!this->humanTask->isActive()) {
+  button->polling();
+  lcd.setCursor(2, 1);  // Set the cursor on the third column and first row.
+  float val = sonar->getDistance();
+  lcd.print(String("water level: ") + this->waterLevel);
+  if (!button->isButtonPressed()) {
     /*
     The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
     whose value linearly depends on the the current water level, WL2 and WLMAX 
@@ -92,15 +103,15 @@ void AlarmTask::execute() {
     otherwise the valve will be open by potentiometer in the humanTask
 
   */
-  }
-    float val = sonar->getDistance();
     val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
     val = max(val, 0);
     val = min(val, 180);
     Serial.println(val);
     pMotor->setPosition(val);
-  //button->polling();
-  //this->humanTask->setActive(button->isButtonPressed());
+  }
+  this->humanTask->setActive(button->isButtonPressed());
+  //Serial.println(button->isButtonPressed());
+  ///if(button-)
 }
 
 
@@ -118,16 +129,16 @@ void HumanControllerTask::execute() {
   if (val != angleValue) {
     angleValue = val;
     val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
-    this->pMotor->on();
+    //this->pMotor->on();
     this->pMotor->setPosition(val);
-    this->pMotor->off();
+    //this->pMotor->off();
   }
 }
 
 
 void HumanControllerTask::setActive(bool active) {
   Task::setActive(active);
-  active ? this->pMotor->on() : this->pMotor->off();
+  //active ? this->pMotor->on() : this->pMotor->off();
 }
 
 
