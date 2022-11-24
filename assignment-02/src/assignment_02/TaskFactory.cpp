@@ -93,7 +93,7 @@ void AlarmTask::execute() {
   */
     float val = sonar->getDistance();
 
-    Serial.println(val);
+    Serial.println(String("sonar-") + val);
     pMotor->setPosition(val);
   }
   this->humanTask->setActive(button->isButtonPressed());

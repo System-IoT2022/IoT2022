@@ -6,11 +6,11 @@ double rangeConverter(double value, double a1, double b1, double a2, double b2) 
   return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
 }
 
-double waterLevelToValveDegree(float val){
-    val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
-    val = max(val, 0);
-    val = min(val, 180);
-    return val;
+double waterLevelToValveDegree(float val) {
+  val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
+  val = max(val, 0);
+  val = min(val, 180);
+  return val;
 }
 
 
@@ -81,7 +81,7 @@ void TaskController::execute() {
         lcd.setCursor(0, 1);
         lcd.print(String("water level: ") + level + "m");
         lcd.setCursor(0, 2);
-      lcd.print(String("valve degree: ") + waterLevelToValveDegree(level) + "*");
+        lcd.print(String("valve degree: ") + waterLevelToValveDegree(level) + "*");
         break;
       case PREALARM:
         this->smartLightSystem->setActive(true);
@@ -106,7 +106,7 @@ void TaskController::execute() {
     this->taskList[newstate]->updateWaterLevel(level);
     this->waterState = newstate;
   }
-  
+
 
   //Serial.println(this->waterState);
   Serial.flush();
