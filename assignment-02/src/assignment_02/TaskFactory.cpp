@@ -1,14 +1,11 @@
-#include <LiquidCrystal_I2C.h>
-
 #include "HardwareSerial.h"
 #include "Arduino.h"
 #include "TaskFactory.h"
 #include "Config.h"
 #include "Scheduler.h"
 
-
-LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 ServoMotor* pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
+
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -48,11 +45,6 @@ void PreAlarmTask::setActive(bool active) {
 }
 
 
-
-static double rangeConverter(double value, double a1, double b1, double a2, double b2) {
-  return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
-}
-
 void AlarmTask::init(int period) {
   Task::init(period);
   this->humanTask = new HumanControllerTask(pMotor);
@@ -69,8 +61,6 @@ void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
     pMotor->on();
-    lcd.init();
-    lcd.backlight();
     //pMotor->setPosition(0);ssss
   } else {
     this->humanTask->setActive(active);
@@ -90,9 +80,7 @@ void AlarmTask::execute() {
   */
   //if button pressed HumanControllerTask->active
   button->polling();
-  lcd.setCursor(2, 1);  // Set the cursor on the third column and first row.
-  float val = sonar->getDistance();
-  lcd.print(String("water level: ") + this->waterLevel);
+  //lcd.print(String("water level: ") + this->waterLevel);
   if (!button->isButtonPressed()) {
     /*
     The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
@@ -103,9 +91,8 @@ void AlarmTask::execute() {
     otherwise the valve will be open by potentiometer in the humanTask
 
   */
-    val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
-    val = max(val, 0);
-    val = min(val, 180);
+    float val = sonar->getDistance();
+
     Serial.println(val);
     pMotor->setPosition(val);
   }

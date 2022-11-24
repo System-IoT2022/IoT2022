@@ -1,7 +1,7 @@
 #include "Scheduler.h"
 #include "Taskcontroller.h"
 #include "TaskFactory.h"
-#include "Config.h"
+//#include "Config.h"
 
 void setup(){
   Serial.begin(9600);

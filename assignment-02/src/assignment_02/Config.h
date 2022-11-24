@@ -1,3 +1,4 @@
+
 /*
  *  This header file stores symbols that concerns 
  *  the configuration of the system.
@@ -7,6 +8,7 @@
 #define __CONFIG__
 // #define __DEBUG__
 
+#include <LiquidCrystal_I2C.h>
 #include "LightSensorImpl.h"
 #include "Pirimpl.h"
 #include "Led.h"
@@ -48,5 +50,6 @@
 #define PREALARM 1
 #define ALARM 2
 #define PERIOD 500
+
 
 #endif
