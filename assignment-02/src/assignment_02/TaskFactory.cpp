@@ -93,6 +93,9 @@ void AlarmTask::init(int period) {
   this->ledB = new Led(LED_LB_PIN);
   this->ledC = new Led(LED_LC_PIN);
   this->button = new ButtonImpl(BUTTON_B_PIN);
+  valveTask = new TurnOffValveTask();
+  valveTask->init(PERIOD);
+  Scheduler::addTask(valveTask);
 }
 
 void AlarmTask::setActive(bool active) {
@@ -114,9 +117,11 @@ void AlarmTask::setActive(bool active) {
     this->ledB->switchOff();
     this->ledC->switchOff();
     this->button->setButtonState(false);
-    pMotor->setPosition(0);
-    delay(500);  //although it's a delay, but we needed enough time to close the valve
-    pMotor->off();
+    //pMotor->setPosition(0);
+    valveTask->setActive(true);
+    //need to set active the task to turn the valve to zero
+    //delay(500);  //although it's a delay, but we needed enough time to close the valve
+    //pMotor->off();
   }
   Task::setActive(active);
 }
@@ -173,6 +178,25 @@ void HumanControllerTask::setActive(bool active) {
   //active ? this->pMotor->on() : this->pMotor->off();
 }
 
+
+
+void TurnOffValveTask::init(int period) {
+  Task::init(period);
+}
+
+void TurnOffValveTask::execute() {
+  pMotor->setPosition(0);
+  if(consumed){
+    Task::setActive(false);
+  }else{
+    consumed = true;
+  }
+}
+
+void TurnOffValveTask::setActive(bool active) {
+  Task::setActive(active);
+  active ? consumed = false : consumed = true;
+}
 
 
 void TurnOnLedForSecondsTask::init(int period) {

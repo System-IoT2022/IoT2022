@@ -32,11 +32,19 @@ public:
   void setActive(bool active);
 };
 
-
+class TurnOffValveTask : public Task {
+private:
+  bool consumed;
+public:
+  void init(int period);
+  void execute();
+  void setActive(bool active);
+};
 
 class AlarmTask : public BridgeTask {
 private:
   Task* humanTask;
+  TurnOffValveTask * valveTask;
   Led* ledC;
   Led* ledB;
   ButtonSensor* button;
@@ -68,6 +76,7 @@ public:
   void execute();
   void setActive(bool active);
 };
+
 
 class HumanControllerTask : public Task {
 private:
