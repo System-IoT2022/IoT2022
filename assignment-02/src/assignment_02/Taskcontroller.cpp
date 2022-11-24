@@ -14,6 +14,9 @@ bool TaskController::addTask(BridgeTask* task) {
 }
 
 void TaskController::init(int period) {
+
+  lcd.init();
+  lcd.backlight();
   Task::init(period);
   BridgeTask* t0 = new NormalTask(&this->lcd);  //create constructor for LB pin and LC pin
   this->addTask(t0);
@@ -35,8 +38,6 @@ void TaskController::init(int period) {
   this->waterState = 0;
   t0->setActive(true);
   this->setActive(true);
-  lcd.init();
-  lcd.backlight();
 }
 void TaskController::execute() {
   int newstate;

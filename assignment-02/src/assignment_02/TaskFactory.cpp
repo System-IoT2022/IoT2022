@@ -39,15 +39,17 @@ void NormalTask::init(int period) {
 void NormalTask::execute() {
 
   // the green led LB is on and LC is off – it means that the bridge can be used.
-  lcd->clear();
-  lcd->noDisplay();
 }
 
 void NormalTask::updateWaterLevel(double waterLevel){};
 void NormalTask::setActive(bool active) {
   Task::setActive(active);
-
   active ? this->ledB->switchOn() : this->ledB->switchOff();
+  if (active) {
+    lcd->clear();
+    lcd->noDisplay();
+    lcd->noBacklight();
+  }
 }
 
 
@@ -63,19 +65,22 @@ void PreAlarmTask::execute() {
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
   //BridgeTask::waterLevel;
   float level = sonar->getDistance();
-  lcd->display();
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("state: pre-alarm");
-  lcd->setCursor(0, 1);
-  lcd->print(String("water level: ") + level + "m");
+  lcd->setCursor(13, 1);
+  lcd->print(level + String("m"));
 }
 
 void PreAlarmTask::setActive(bool active) {
-
   this->blinking->setActive(active);
-
   Task::setActive(active);
+  if (active) {
+    lcd->backlight();
+    lcd->display();
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print("state: pre-alarm");
+    lcd->setCursor(0, 1);
+    lcd->print(String("water level: "));
+  }
 }
 
 
@@ -94,6 +99,15 @@ void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
     pMotor->on();
+    lcd->backlight();
+    lcd->display();
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print("state: alarm");
+    lcd->setCursor(0, 1);
+    lcd->print(String("water level: "));
+    lcd->setCursor(0, 2);
+    lcd->print(String("valve degree: "));
     //pMotor->setPosition(0);
   } else {
     this->humanTask->setActive(active);
@@ -112,32 +126,20 @@ void AlarmTask::execute() {
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
   float level = sonar->getDistance();
-  lcd->display();
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("state: alarm");
-  lcd->setCursor(0, 1);
-  lcd->print(String("water level: ") + level + "m");
-  lcd->setCursor(0, 2);
-  lcd->print(String("valve degree: ") + waterLevelToValveDegree(level));
+
+  lcd->setCursor(13, 1);
+  lcd->print(level + String("m"));
+  lcd->setCursor(14, 2);
+  lcd->print(waterLevelToValveDegree(level));
   //if button pressed HumanControllerTask->active
   button->polling();
   //lcd->print(String("water level: ") + this->waterLevel);
-  if (!button->isButtonPressed()) {
-    /*
-    The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
-    whose value linearly depends on the the current water level, WL2 and WLMAX 
-    (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX).
-    The opening of the valve changes dynamically depending on the current water level
+  float val = sonar->getDistance();
+  Serial.println(String("sonar-") + val);
+  Serial.flush();
+  if (!button->isButtonPressed() && !humanTask->isActive()) {
 
-    otherwise the valve will be open by potentiometer in the humanTask
-
-  */
-    float val = sonar->getDistance();
-
-    Serial.println(String("sonar-") + val);
-    Serial.flush();
-    pMotor->setPosition(val);
+    pMotor->setPosition(waterLevelToValveDegree(val));
   }
   this->humanTask->setActive(button->isButtonPressed());
   //Serial.println(button->isButtonPressed());
