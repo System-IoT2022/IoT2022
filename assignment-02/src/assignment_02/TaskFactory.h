@@ -10,7 +10,9 @@ class NormalTask : public BridgeTask {
 private:
   Led* ledA;
   Led* ledB;
+  LiquidCrystal_I2C* lcd;
 public:
+  NormalTask(LiquidCrystal_I2C* lcd);
   void init(int period);
   void execute();
   void updateWaterLevel(double waterLevel);
@@ -22,7 +24,9 @@ public:
 class PreAlarmTask : public BridgeTask {
 private:
   BlinkTask* blinking;
+  LiquidCrystal_I2C* lcd;
 public:
+  PreAlarmTask(LiquidCrystal_I2C* lcd);
   void init(int period);
   void execute();
   void setActive(bool active);
@@ -35,9 +39,11 @@ private:
   Task* humanTask;
   Led* ledC;
   Led* ledB;
-  ButtonSensor *button;
-   SonarSensor* sonar;
+  ButtonSensor* button;
+  //SonarSensor* sonar;
+  LiquidCrystal_I2C* lcd;
 public:
+  AlarmTask(LiquidCrystal_I2C* lcd);
   void setActive(bool active);
   void init(int period);
   void execute();

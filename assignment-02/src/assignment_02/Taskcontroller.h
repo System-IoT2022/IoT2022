@@ -1,8 +1,8 @@
 #ifndef __TASKCONTROLLER__
 #define __TASKCONTROLLER__
 #include "TaskFactory.h"
-#define MAX_TASKS 10
 #include "Config.h"
+#define MAX_TASKS 10
 
 class TaskController : public Task {
 private:

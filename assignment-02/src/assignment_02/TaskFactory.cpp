@@ -5,7 +5,32 @@
 #include "Scheduler.h"
 
 ServoMotor* pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
+SonarSensor* sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
 
+
+double rangeConverter(double value, double a1, double b1, double a2, double b2) {
+  return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
+}
+
+double waterLevelToValveDegree(float val) {
+  val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
+  val = max(val, 0);
+  val = min(val, 180);
+  return val;
+}
+
+
+NormalTask::NormalTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
+
+PreAlarmTask::PreAlarmTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
+
+AlarmTask::AlarmTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -14,6 +39,8 @@ void NormalTask::init(int period) {
 void NormalTask::execute() {
 
   // the green led LB is on and LC is off – it means that the bridge can be used.
+  lcd->clear();
+  lcd->noDisplay();
 }
 
 void NormalTask::updateWaterLevel(double waterLevel){};
@@ -35,6 +62,13 @@ void PreAlarmTask::execute() {
   //The red led LC starts blinking with a period of 2 seconds.
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
   //BridgeTask::waterLevel;
+  float level = sonar->getDistance();
+  lcd->display();
+  lcd->clear();
+  lcd->setCursor(0, 0);
+  lcd->print("state: pre-alarm");
+  lcd->setCursor(0, 1);
+  lcd->print(String("water level: ") + level + "m");
 }
 
 void PreAlarmTask::setActive(bool active) {
@@ -54,14 +88,13 @@ void AlarmTask::init(int period) {
   this->ledB = new Led(LED_LB_PIN);
   this->ledC = new Led(LED_LC_PIN);
   this->button = new ButtonImpl(BUTTON_B_PIN);
-  this->sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
 }
 
 void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
     pMotor->on();
-    //pMotor->setPosition(0);ssss
+    //pMotor->setPosition(0);
   } else {
     this->humanTask->setActive(active);
     this->ledB->switchOff();
@@ -78,9 +111,18 @@ void AlarmTask::execute() {
   /*
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
+  float level = sonar->getDistance();
+  lcd->display();
+  lcd->clear();
+  lcd->setCursor(0, 0);
+  lcd->print("state: alarm");
+  lcd->setCursor(0, 1);
+  lcd->print(String("water level: ") + level + "m");
+  lcd->setCursor(0, 2);
+  lcd->print(String("valve degree: ") + waterLevelToValveDegree(level));
   //if button pressed HumanControllerTask->active
   button->polling();
-  //lcd.print(String("water level: ") + this->waterLevel);
+  //lcd->print(String("water level: ") + this->waterLevel);
   if (!button->isButtonPressed()) {
     /*
     The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
@@ -94,6 +136,7 @@ void AlarmTask::execute() {
     float val = sonar->getDistance();
 
     Serial.println(String("sonar-") + val);
+    Serial.flush();
     pMotor->setPosition(val);
   }
   this->humanTask->setActive(button->isButtonPressed());
@@ -156,8 +199,8 @@ void LigthningSubSystemTask::init(int period) {
   Task::init(period);
   pir = new PirImpl(PIR_PIN);
   /*
-  lcd.init();
-  lcd.backlight();*/
+  lcd->init();
+  lcd->backlight();*/
   this->lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   this->pir = new PirImpl(PIR_PIN);
   this->ledATask = new TurnOnLedForSecondsTask();
@@ -178,6 +221,6 @@ void LigthningSubSystemTask::execute() {
   //pMotor->off();
   //Serial.println(sonar->getDistance());
   //delay(1000);
-  //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
-  //lcd.print("Dammi soldi!");
+  //lcd->setCursor(2, 1); // Set the cursor on the third column and first row.
+  //lcd->print("Dammi soldi!");
 }

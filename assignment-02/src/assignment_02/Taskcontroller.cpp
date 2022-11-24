@@ -2,18 +2,6 @@
 #include "Scheduler.h"
 #include "Config.h"
 
-double rangeConverter(double value, double a1, double b1, double a2, double b2) {
-  return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
-}
-
-double waterLevelToValveDegree(float val) {
-  val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
-  val = max(val, 0);
-  val = min(val, 180);
-  return val;
-}
-
-
 bool TaskController::addTask(BridgeTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
     if (Scheduler::addTask(task)) {
@@ -27,15 +15,15 @@ bool TaskController::addTask(BridgeTask* task) {
 
 void TaskController::init(int period) {
   Task::init(period);
-  BridgeTask* t0 = new NormalTask();  //create constructor for LB pin and LC pin
+  BridgeTask* t0 = new NormalTask(&this->lcd);  //create constructor for LB pin and LC pin
   this->addTask(t0);
   t0->init(NORMALCHECK);
 
-  Task* t1 = new PreAlarmTask();
+  Task* t1 = new PreAlarmTask(&this->lcd);
   this->addTask(t1);
   t1->init(PREALARMCHECK);
 
-  Task* t2 = new AlarmTask();
+  Task* t2 = new AlarmTask(&this->lcd);
   t2->init(ALARMCHECK);
   this->addTask(t2);
 
@@ -74,30 +62,14 @@ void TaskController::execute() {
       case ALARM:
         this->smartLightSystem->setActive(false);
         this->taskList[ALARM]->setActive(true);
-        lcd.display();
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("state: alarm");
-        lcd.setCursor(0, 1);
-        lcd.print(String("water level: ") + level + "m");
-        lcd.setCursor(0, 2);
-        lcd.print(String("valve degree: ") + waterLevelToValveDegree(level) + "*");
         break;
       case PREALARM:
         this->smartLightSystem->setActive(true);
         this->taskList[PREALARM]->setActive(true);
-        lcd.display();
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("state: pre-alarm");
-        lcd.setCursor(0, 2);
-        lcd.print(String("water level: ") + level + "m");
         break;
       case NORMAL:
         this->smartLightSystem->setActive(true);
         this->taskList[NORMAL]->setActive(true);
-        lcd.clear();
-        lcd.noDisplay();
         break;
     }
     this->taskList[this->waterState]->setActive(false);
