@@ -111,17 +111,12 @@ void AlarmTask::setActive(bool active) {
     lcd->print(String("water level: "));
     lcd->setCursor(0, 2);
     lcd->print(String("valve degree: "));
-    //pMotor->setPosition(0);
   } else {
     this->humanTask->setActive(active);
     this->ledB->switchOff();
     this->ledC->switchOff();
     this->button->setButtonState(false);
-    //pMotor->setPosition(0);
     valveTask->setActive(true);
-    //need to set active the task to turn the valve to zero
-    //delay(500);  //although it's a delay, but we needed enough time to close the valve
-    //pMotor->off();
   }
   Task::setActive(active);
 }
@@ -136,19 +131,15 @@ void AlarmTask::execute() {
   lcd->print(level + String("m"));
   lcd->setCursor(14, 2);
   lcd->print(waterLevelToValveDegree(level));
-  //if button pressed HumanControllerTask->active
   button->polling();
-  //lcd->print(String("water level: ") + this->waterLevel);
+
   float val = sonar->getDistance();
   Serial.println(String("sonar-") + val);
   Serial.flush();
   if (!button->isButtonPressed() && !humanTask->isActive()) {
-
     pMotor->setPosition(waterLevelToValveDegree(val));
   }
   this->humanTask->setActive(button->isButtonPressed());
-  //Serial.println(button->isButtonPressed());
-  ///if(button-)
 }
 
 
@@ -186,9 +177,10 @@ void TurnOffValveTask::init(int period) {
 
 void TurnOffValveTask::execute() {
   pMotor->setPosition(0);
-  if(consumed){
+  if (consumed) {
+    pMotor->off();
     Task::setActive(false);
-  }else{
+  } else {
     consumed = true;
   }
 }
