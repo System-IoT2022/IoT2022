@@ -38,6 +38,8 @@ void TaskController::init(int period) {
   this->waterState = 0;
   t0->setActive(true);
   this->setActive(true);
+
+  MsgService.init();
 }
 void TaskController::execute() {
   int newstate;
@@ -79,10 +81,7 @@ void TaskController::execute() {
     this->taskList[newstate]->updateWaterLevel(level);
     this->waterState = newstate;
   }
-
-
-  //Serial.println(this->waterState);
-  Serial.flush();
+  MsgService.sendMsg(String("waterlevel-") + level);
   return;
 }
 Task** TaskController::getTask() {

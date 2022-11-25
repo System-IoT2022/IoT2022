@@ -17,6 +17,7 @@
 #include <LiquidCrystal.h>
 #include <Arduino.h>
 #include "ButtonImpl.h"
+#include "MsgService.h"
 
 /*pin of sensors*/
 #define LED_LA_PIN 4
