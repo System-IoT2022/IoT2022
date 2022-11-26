@@ -1,8 +1,9 @@
 package com.iot;
 
+import java.util.ArrayList;
 
 public interface CommChannel {
-	
+
 	/**
 	 * Send a message represented by a string (without new line).
 	 * 
@@ -11,9 +12,9 @@ public interface CommChannel {
 	 * @param msg
 	 */
 	void sendMsg(String msg);
-	
+
 	/**
-	 * To receive a message. 
+	 * To receive a message.
 	 * 
 	 * Blocking behaviour.
 	 */
@@ -25,5 +26,7 @@ public interface CommChannel {
 	 * @return
 	 */
 	boolean isMsgAvailable();
+
+	ArrayList<String> retiriveMessages() throws Exception;
 
 }
