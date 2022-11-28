@@ -33,10 +33,11 @@ public class App extends Application {
     XYChart.Series<Number, Number> series;
     SerialParser parser;
     GUIFactoryImpl p;
-    float valveOpeningDegrees; // apertura della valvola in gradi
+    float valveDegrees; // apertura della valvola in gradi
     String state; // stato di arduino: 0=normal, 1=pre-alarm , 2= alarm
     String smartLight;
     long start;
+    boolean remoteControl;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -46,8 +47,8 @@ public class App extends Application {
         final Timer clockTimer = new Timer();
         final Label stateLabel, lightLabel, valveLabel;
         ArrayList<String> rawData = new ArrayList<>();
-
-        valveOpeningDegrees = 0;
+        remoteControl=false;
+        valveDegrees = 0;
         state = "unknown";
         smartLight = "unknown";
 
@@ -102,13 +103,19 @@ public class App extends Application {
 
             @Override
             public void changed(ObservableValue<? extends Number> arg0, Number arg1, Number newVal) {
-
+    
                 if (state.equals("alarm")) {
-                    valveOpeningDegrees = newVal.floatValue();
-                    valveOpeningDegrees = valveOpeningDegrees * (float) 1.8;
+                    valveDegrees = newVal.floatValue();
+                    valveDegrees = valveDegrees * (float) 1.8;
 
-                    valveLabel.setText(String.format("%.2f", valveOpeningDegrees));
-                    console.sendMsg("valve-" + valveOpeningDegrees);
+                    valveLabel.setText(String.format("%.2f", valveDegrees));
+                    
+                    if( !remoteControl && state.equals("alarm") ){
+                        remoteControl = true;
+                        console.sendMsg("remotecontrol-on");
+                    }
+                    
+                    
                 }
 
             }
@@ -163,6 +170,17 @@ public class App extends Application {
                         // ottengo smart light
                         smartLight = parser.getSmartLight(rawData, smartLight);
                         lightLabel.setText(smartLight);
+
+                        if(remoteControl){
+                            if(state.equals("alarm")){
+                                
+                                console.sendMsg(("valve-" + valveLabel.getText()));
+                                
+                            }else{
+                                remoteControl=false;
+                            }
+                        }
+                        
                     }
                 });
             }

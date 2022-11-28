@@ -47,6 +47,7 @@ public class SerialCommChannel implements CommChannel, SerialPortEventListener {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		System.out.println(array);
 	}
 
 	@Override
