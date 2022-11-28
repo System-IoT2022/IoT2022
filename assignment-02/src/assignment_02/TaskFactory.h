@@ -83,8 +83,10 @@ private:
   ServoMotor* pMotor;
   int angleValue;
   bool remoteControl;
+   LiquidCrystal_I2C* lcd;
+   int val = 0, potVal = 0;
 public:
-  HumanControllerTask(ServoMotor* pMotor);
+  HumanControllerTask(ServoMotor* pMotor, LiquidCrystal_I2C* lcd);
   void init(int period);
   void execute();
   void setActive(bool active);

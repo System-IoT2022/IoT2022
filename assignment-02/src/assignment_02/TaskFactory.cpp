@@ -89,7 +89,7 @@ void PreAlarmTask::setActive(bool active) {
 
 void AlarmTask::init(int period) {
   Task::init(period);
-  this->humanTask = new HumanControllerTask(pMotor);
+  this->humanTask = new HumanControllerTask(pMotor, lcd);
   this->humanTask->setActive(false);
   this->humanTask->init(PERIOD);
   Scheduler::addTask(this->humanTask);
@@ -114,6 +114,8 @@ void AlarmTask::setActive(bool active) {
     lcd->print(String("water level: "));
     lcd->setCursor(0, 2);
     lcd->print(String("valve degree: "));
+    //int str = String("valve-124.24").substring(6).toInt();
+    //lcd->print(str);
     MsgService.sendMsg("state-alarm");
   } else {
     this->humanTask->setActive(active);
@@ -147,8 +149,9 @@ void AlarmTask::execute() {
 }
 
 
-HumanControllerTask::HumanControllerTask(ServoMotor* pMotor) {
+HumanControllerTask::HumanControllerTask(ServoMotor* pMotor, LiquidCrystal_I2C* lcd) {
   this->pMotor = pMotor;
+  this->lcd = lcd;
   angleValue = analogRead(POT_PIN);
 }
 
@@ -157,7 +160,6 @@ void HumanControllerTask::init(int period) {
   this->remoteControl = false;
 }
 void HumanControllerTask::execute() {
-  int val = 0, potVal = 0;
   /*check message sent from remote*/
   if (MsgService.isMsgAvailable()) {
     Msg* msg = MsgService.receiveMsg();
@@ -165,12 +167,14 @@ void HumanControllerTask::execute() {
       this->remoteControl = true;
     } else if (msg->getContent() == "remotecontrol-off") {
       this->remoteControl = false;
-    } else if (String(msg->getContent()).substring(0, 5) == "valve-") {
+    } else if (String(msg->getContent()).substring(0, 6) == "valve-") {
       val = String(msg->getContent()).substring(6).toInt();
       val = max(val, 0);
       val = min(val, 180);
-    }
     /* NOT TO FORGET: message deallocation */
+      lcd->setCursor(0, 3);
+      lcd->print(msg->getContent());
+    }
     delete msg;
   }
 
@@ -185,7 +189,10 @@ void HumanControllerTask::execute() {
 
 void HumanControllerTask::setActive(bool active) {
   Task::setActive(active);
-  //active ? this->pMotor->on() : this->pMotor->off();
+  //active ? this->remoteControl = false : this->pMotor->off();
+  if(!active){
+    this->remoteControl = false;
+  }
 }
 
 
