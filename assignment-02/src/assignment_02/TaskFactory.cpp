@@ -176,12 +176,8 @@ void HumanControllerTask::execute() {
 
   //check potentiometer for motor
   potVal = analogRead(POT_PIN);
-  potVal = map(val, 0, 1023, 0, 180);
+  potVal = map(potVal, 0, 1023, 0, 180);
 
-
-  if (this->remoteControl) {
-    angleValue = val;
-  }
   this->angleValue = this->remoteControl ? val : potVal;
   this->pMotor->setPosition(angleValue);
 }
