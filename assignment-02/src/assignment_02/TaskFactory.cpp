@@ -1,19 +1,37 @@
+#include "WString.h"
 #include "HardwareSerial.h"
 #include "Arduino.h"
 #include "TaskFactory.h"
 #include "Config.h"
 #include "Scheduler.h"
 
+ServoMotor* pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
+SonarSensor* sonar = new SonarImpl(SONAR_TRIG_PIN, SONAR_ECHO_PIN);
 
-//ServoMotor* pMotor;
-int pos = 0;
-int delta = 1;
-//LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 20, 4);
 
-//needs to be global only for attach to the pin2 interrupt
-void setInterruptTask();
-Task* interruptTask;
-Task* subInterruptTask;
+double rangeConverter(double value, double a1, double b1, double a2, double b2) {
+  return (value - a1) / (b1 - a1) * (b2 - a2) + a2;
+}
+
+double waterLevelToValveDegree(float val) {
+  val = rangeConverter(val, ALARMWATERLEVEL, WL_MAX, 0.0, 180.0);  // scale it to use it with the servo (value between 0 and 180)
+  val = max(val, 0);
+  val = min(val, 180);
+  return val;
+}
+
+
+NormalTask::NormalTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
+
+PreAlarmTask::PreAlarmTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
+
+AlarmTask::AlarmTask(LiquidCrystal_I2C* lcd) {
+  this->lcd = lcd;
+}
 
 void NormalTask::init(int period) {
   Task::init(period);
@@ -27,8 +45,13 @@ void NormalTask::execute() {
 void NormalTask::updateWaterLevel(double waterLevel){};
 void NormalTask::setActive(bool active) {
   Task::setActive(active);
-
   active ? this->ledB->switchOn() : this->ledB->switchOff();
+  if (active) {
+    lcd->clear();
+    lcd->noDisplay();
+    lcd->noBacklight();
+    MsgService.sendMsg("state-normal");
+  }
 }
 
 
@@ -43,34 +66,64 @@ void PreAlarmTask::execute() {
   //The red led LC starts blinking with a period of 2 seconds.
   //The LCD is turned on, informing about the pre-alarm and displaying the current water level
   //BridgeTask::waterLevel;
+  float level = sonar->getDistance();
+  lcd->setCursor(13, 1);
+  lcd->print(level + String("m"));
 }
 
 void PreAlarmTask::setActive(bool active) {
-
   this->blinking->setActive(active);
-
   Task::setActive(active);
+  if (active) {
+    lcd->backlight();
+    lcd->display();
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print("state: pre-alarm");
+    lcd->setCursor(0, 1);
+    lcd->print(String("water level: "));
+    MsgService.sendMsg("state-prealarm");
+  }
 }
 
 
 void AlarmTask::init(int period) {
   Task::init(period);
-  this->humanTask = new HumanControllerTask();
-  interruptTask = this;
-  subInterruptTask = this->humanTask;
-  this->ledC = new Led(LED_LC_PIN);
+  this->humanTask = new HumanControllerTask(pMotor, lcd);
+  this->humanTask->setActive(false);
+  this->humanTask->init(PERIOD);
+  Scheduler::addTask(this->humanTask);
   this->ledB = new Led(LED_LB_PIN);
-  //not working, need to find another method
-  //attachInterrupt(digitalPinToInterrupt(BUTTON_B_PIN), setInterruptTask , RISING);
+  this->ledC = new Led(LED_LC_PIN);
+  this->button = new ButtonImpl(BUTTON_B_PIN);
+  valveTask = new TurnOffValveTask();
+  valveTask->init(PERIOD);
+  Scheduler::addTask(valveTask);
 }
+
 void AlarmTask::setActive(bool active) {
   if (active) {
     this->ledC->switchOn();
+    pMotor->on();
+    lcd->backlight();
+    lcd->display();
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print("state: alarm");
+    lcd->setCursor(0, 1);
+    lcd->print(String("water level: "));
+    lcd->setCursor(0, 2);
+    lcd->print(String("valve degree: "));
+    //int str = String("valve-124.24").substring(6).toInt();
+    //lcd->print(str);
+    MsgService.sendMsg("state-alarm");
   } else {
-    this->humanTask->setActive(false);
+    this->humanTask->setActive(active);
     this->ledB->switchOff();
     this->ledC->switchOff();
-  }  //this->ledB->switchOn()
+    this->button->setButtonState(false);
+    valveTask->setActive(true);
+  }
   Task::setActive(active);
 }
 
@@ -78,45 +131,89 @@ void AlarmTask::execute() {
   /*
   The LCD is still on, informing about the alarm situation and displaying both the current water level and the opening degrees of the valve 
   */
-  //if button pressed HumanControllerTask->active
-  if (!this->humanTask->isActive()) {
-    /*
-    The valve must be opened of some ALPHA degrees ( 0 < ALPHA < 180), 
-    whose value linearly depends on the the current water level, WL2 and WLMAX 
-    (so 0 degrees corresponds to WL2 and 180 degrees correspond to WLMAX).
-    The opening of the valve changes dynamically depending on the current water level
+  float level = sonar->getDistance();
 
-    otherwise the valve will be open by potentiometer in the humanTask
+  lcd->setCursor(13, 1);
+  lcd->print(level + String("m"));
+  lcd->setCursor(14, 2);
+  lcd->print(waterLevelToValveDegree(level));
+  button->polling();
 
-  */
+  float val = sonar->getDistance();
+  //Serial.println(String("sonar-") + val);
+  //Serial.flush();
+  if (!button->isButtonPressed() && !humanTask->isActive()) {
+    pMotor->setPosition(waterLevelToValveDegree(val));
   }
-}
-
-long prevts = 0;
-void setInterruptTask() {  //not working interrupt
-  if (interruptTask->isActive()) {
-    subInterruptTask->setActive(true);
-  }
-  long ts = micros();
-  if (ts - prevts > 20000) {
-    prevts = ts;
-  }  //necessary for interrupt chain when bouncing
+  this->humanTask->setActive(button->isButtonPressed());
 }
 
 
-
-
+HumanControllerTask::HumanControllerTask(ServoMotor* pMotor, LiquidCrystal_I2C* lcd) {
+  this->pMotor = pMotor;
+  this->lcd = lcd;
+  angleValue = analogRead(POT_PIN);
+}
 
 void HumanControllerTask::init(int period) {
   Task::init(period);
+  this->remoteControl = false;
 }
 void HumanControllerTask::execute() {
+  /*check message sent from remote*/
+  if (MsgService.isMsgAvailable()) {
+    Msg* msg = MsgService.receiveMsg();
+    if (msg->getContent() == "remotecontrol-on") {
+      this->remoteControl = true;
+    } else if (msg->getContent() == "remotecontrol-off") {
+      this->remoteControl = false;
+    } else if (String(msg->getContent()).substring(0, 6) == "valve-") {
+      val = String(msg->getContent()).substring(6).toInt();
+      val = max(val, 0);
+      val = min(val, 180);
+    /* NOT TO FORGET: message deallocation */
+      lcd->setCursor(0, 3);
+      lcd->print(msg->getContent());
+    }
+    delete msg;
+  }
+
   //check potentiometer for motor
+  potVal = analogRead(POT_PIN);
+  potVal = map(potVal, 0, 1023, 0, 180);
+
+  this->angleValue = this->remoteControl ? val : potVal;
+  this->pMotor->setPosition(angleValue);
 }
 
 
+void HumanControllerTask::setActive(bool active) {
+  Task::setActive(active);
+  //active ? this->remoteControl = false : this->pMotor->off();
+  if(!active){
+    this->remoteControl = false;
+  }
+}
 
 
+void TurnOffValveTask::init(int period) {
+  Task::init(period);
+}
+
+void TurnOffValveTask::execute() {
+  pMotor->setPosition(0);
+  if (consumed) {
+    pMotor->off();
+    Task::setActive(false);
+  } else {
+    consumed = true;
+  }
+}
+
+void TurnOffValveTask::setActive(bool active) {
+  Task::setActive(active);
+  active ? consumed = false : consumed = true;
+}
 
 
 void TurnOnLedForSecondsTask::init(int period) {
@@ -133,8 +230,10 @@ void TurnOnLedForSecondsTask::setActive(bool active) {
   Task::setActive(active);
   if (!active) {
     this->ledA->switchOff();
+    MsgService.sendMsg("smartlight-off");
   } else {
     this->ledA->switchOn();
+    MsgService.sendMsg("smartlight-on");
   }
 }
 
@@ -144,13 +243,7 @@ void TurnOnLedForSecondsTask::setActive(bool active) {
 void LigthningSubSystemTask::init(int period) {
   Task::init(period);
   pir = new PirImpl(PIR_PIN);
-  /*
-  lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  pMotor = new ServoMotorImpl(SERVO_MOTOR_PIN);
-  lcd.init();
-  lcd.backlight();
-  pMotor->on();
-  pMotor->setPosition(0);*/
+
   this->lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
   this->pir = new PirImpl(PIR_PIN);
   this->ledATask = new TurnOnLedForSecondsTask();
@@ -164,13 +257,4 @@ void LigthningSubSystemTask::execute() {
   if (pir->isDetected() && this->lightSensor->getLightIntensity() <= THL) {
     this->ledATask->setActive(true);
   }
-  //int val = analogRead(POT_PIN);
-  //val = map(val, 0, 1023, 0, 180);  // scale it to use it with the servo (value between 0 and 180)
-  //pMotor->on();
-  //pMotor->setPosition(180 - val);
-  //pMotor->off();
-  //Serial.println(sonar->getDistance());
-  //delay(1000);
-  //lcd.setCursor(2, 1); // Set the cursor on the third column and first row.
-  //lcd.print("Dammi soldi!");
 }

@@ -1,3 +1,4 @@
+
 /*
  *  This header file stores symbols that concerns 
  *  the configuration of the system.
@@ -7,6 +8,7 @@
 #define __CONFIG__
 // #define __DEBUG__
 
+#include <LiquidCrystal_I2C.h>
 #include "LightSensorImpl.h"
 #include "Pirimpl.h"
 #include "Led.h"
@@ -14,6 +16,8 @@
 #include "servo_motor_impl.h"
 #include <LiquidCrystal.h>
 #include <Arduino.h>
+#include "ButtonImpl.h"
+#include "MsgService.h"
 
 /*pin of sensors*/
 #define LED_LA_PIN 4
@@ -41,9 +45,12 @@
 //to do
 #define NORMALWATERLEVEL 1
 #define PREALARMWATERLEVEL 0.30
-#define ALARMWATERLEVEL 0.05
+#define ALARMWATERLEVEL 0.15
+#define WL_MAX 0.05
 #define NORMAL 0
 #define PREALARM 1
 #define ALARM 2
+#define PERIOD 500
+
 
 #endif

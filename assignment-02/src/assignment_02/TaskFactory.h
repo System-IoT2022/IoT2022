@@ -9,9 +9,10 @@
 class NormalTask : public BridgeTask {
 private:
   Led* ledA;
-
-Led* ledB;
+  Led* ledB;
+  LiquidCrystal_I2C* lcd;
 public:
+  NormalTask(LiquidCrystal_I2C* lcd);
   void init(int period);
   void execute();
   void updateWaterLevel(double waterLevel);
@@ -23,21 +24,34 @@ public:
 class PreAlarmTask : public BridgeTask {
 private:
   BlinkTask* blinking;
+  LiquidCrystal_I2C* lcd;
+public:
+  PreAlarmTask(LiquidCrystal_I2C* lcd);
+  void init(int period);
+  void execute();
+  void setActive(bool active);
+};
+
+class TurnOffValveTask : public Task {
+private:
+  bool consumed;
 public:
   void init(int period);
   void execute();
   void setActive(bool active);
 };
 
-
-
 class AlarmTask : public BridgeTask {
 private:
   Task* humanTask;
+  TurnOffValveTask * valveTask;
   Led* ledC;
   Led* ledB;
-  void setHumanTask();
+  ButtonSensor* button;
+  //SonarSensor* sonar;
+  LiquidCrystal_I2C* lcd;
 public:
+  AlarmTask(LiquidCrystal_I2C* lcd);
   void setActive(bool active);
   void init(int period);
   void execute();
@@ -63,10 +77,19 @@ public:
   void setActive(bool active);
 };
 
+
 class HumanControllerTask : public Task {
+private:
+  ServoMotor* pMotor;
+  int angleValue;
+  bool remoteControl;
+   LiquidCrystal_I2C* lcd;
+   int val = 0, potVal = 0;
 public:
+  HumanControllerTask(ServoMotor* pMotor, LiquidCrystal_I2C* lcd);
   void init(int period);
   void execute();
+  void setActive(bool active);
 };
 
 

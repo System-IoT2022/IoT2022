@@ -2,7 +2,6 @@
 #include "Scheduler.h"
 #include "Config.h"
 
-
 bool TaskController::addTask(BridgeTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
     if (Scheduler::addTask(task)) {
@@ -15,16 +14,19 @@ bool TaskController::addTask(BridgeTask* task) {
 }
 
 void TaskController::init(int period) {
+
+  lcd.init();
+  lcd.backlight();
   Task::init(period);
-  BridgeTask* t0 = new NormalTask();  //create constructor for LB pin and LC pin
+  BridgeTask* t0 = new NormalTask(&this->lcd);  //create constructor for LB pin and LC pin
   this->addTask(t0);
   t0->init(NORMALCHECK);
 
-  Task* t1 = new PreAlarmTask();
+  Task* t1 = new PreAlarmTask(&this->lcd);
   this->addTask(t1);
   t1->init(PREALARMCHECK);
 
-  Task* t2 = new AlarmTask();
+  Task* t2 = new AlarmTask(&this->lcd);
   t2->init(ALARMCHECK);
   this->addTask(t2);
 
@@ -36,6 +38,8 @@ void TaskController::init(int period) {
   this->waterState = 0;
   t0->setActive(true);
   this->setActive(true);
+
+  MsgService.init();
 }
 void TaskController::execute() {
   int newstate;
@@ -77,10 +81,7 @@ void TaskController::execute() {
     this->taskList[newstate]->updateWaterLevel(level);
     this->waterState = newstate;
   }
-  
-
-  Serial.println(this->waterState);
-  Serial.flush();
+  MsgService.sendMsg(String("waterlevel-") + level);
   return;
 }
 Task** TaskController::getTask() {
