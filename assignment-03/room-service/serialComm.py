@@ -1,13 +1,7 @@
 import serial
 import time
-'''
-import serial.tools.list_ports
-ports = list(serial.tools.list_ports.comports())
-for p in ports:
-    if "ACM" in p.description:
-        serialPort = p
-    
-'''
+import datetime
+
 
 class SerialCommunication:
     def __init__(self, _portName='/dev/ttyACM0', _timeout=0):
@@ -16,12 +10,11 @@ class SerialCommunication:
         time.sleep(2)
 
 
-    def sendMsg(self, option):
-        if(option == '1'):
-            self.arduino.write(str.encode('1'))
-            print("LED turned on")
-            time.sleep(1)
-
-        if(option == '0'):
-            self.arduino.write(str.encode('0'))
-            print("LED turned off")
+    def sendMsg(self, message):
+        currentime = datetime.datetime.now()
+        hour = currentime.strftime('%H:%M')
+        presence, brightness= message
+        msg = f'{presence} {brightness} {hour}'
+        print("forwarded to arduino : {}".format(msg))
+        self.arduino.write(str.encode(msg))
+        time.sleep(1)

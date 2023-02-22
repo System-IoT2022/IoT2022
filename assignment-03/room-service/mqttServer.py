@@ -13,7 +13,7 @@ TOPIC = "iot-server-esp-32149259214"
 CLIENT_ID = ""
 FLAG_CONNECTED = 0
 
-serialComm = SerialCommunication()
+serialComm = SerialCommunication('/dev/ttyUSB0')
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -26,8 +26,8 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     print("Received `{payload}` from `{topic}` topic".format(
         payload=msg.payload.decode(), topic=msg.topic))
-    message = msg.payload.decode()
-    serialComm.sendMsg(message)
+    messageStr = msg.payload.decode()
+    serialComm.sendMsg(messageStr.split(" "))
 
 
 def connect_mqtt():
