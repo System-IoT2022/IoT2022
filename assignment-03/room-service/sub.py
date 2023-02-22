@@ -6,13 +6,11 @@ import time
 from paho.mqtt import client as mqtt_client
 
 
-BROKER = 'ga1dae9f.ala.us-east-1.emqxsl.com'
-PORT = 8084
-TOPIC = "provapc"
+BROKER = 'broker.hivemq.com'
+PORT = 1883
+TOPIC = "proj-iot-id-554381721"
 # generate client ID with pub prefix randomly
-CLIENT_ID = "provapc2"
-USERNAME = 'iot'
-PASSWORD = 'iot'
+CLIENT_ID = ""
 FLAG_CONNECTED = 0
 
 def on_connect(client, userdata, flags, rc):
@@ -29,9 +27,9 @@ def on_message(client, userdata, msg):
 
 
 def connect_mqtt():
-    client = mqtt_client.Client(CLIENT_ID, transport='websockets')
-    client.tls_set(ca_certs='emqxsl-ca.crt')
-    client.username_pw_set(USERNAME, PASSWORD)
+    client = mqtt_client.Client(CLIENT_ID, transport='tcp')
+    #client.tls_set(ca_certs='emqxsl-ca.crt')
+   # client.username_pw_set(USERNAME, PASSWORD)
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(BROKER, PORT)
