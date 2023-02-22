@@ -4,6 +4,7 @@ import random
 import time
 
 from paho.mqtt import client as mqtt_client
+from serialComm import *
 
 
 BROKER = 'broker.hivemq.com'
@@ -11,6 +12,8 @@ PORT = 1883
 TOPIC = "iot-server-esp-32149259214"
 CLIENT_ID = ""
 FLAG_CONNECTED = 0
+
+serialComm = SerialCommunication()
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -23,6 +26,8 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     print("Received `{payload}` from `{topic}` topic".format(
         payload=msg.payload.decode(), topic=msg.topic))
+    message = msg.payload.decode()
+    serialComm.sendMsg(message)
 
 
 def connect_mqtt():
