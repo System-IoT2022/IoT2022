@@ -9,7 +9,6 @@ from paho.mqtt import client as mqtt_client
 BROKER = 'broker.hivemq.com'
 PORT = 1883
 TOPIC = "iot-server-esp-32149259214"
-# generate client ID with pub prefix randomly
 CLIENT_ID = ""
 FLAG_CONNECTED = 0
 
@@ -28,8 +27,8 @@ def on_message(client, userdata, msg):
 
 def connect_mqtt():
     client = mqtt_client.Client(CLIENT_ID, transport='tcp')
-    #client.tls_set(ca_certs='emqxsl-ca.crt')
-   # client.username_pw_set(USERNAME, PASSWORD)
+    # client.tls_set(ca_certs='emqxsl-ca.crt')
+    # client.username_pw_set(USERNAME, PASSWORD)
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(BROKER, PORT)

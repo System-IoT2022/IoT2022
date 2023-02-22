@@ -17,7 +17,10 @@ datem = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 output = {"dataHour" : datem.hour, "pir" : 1, "brightness" : 250}
 data = json.dumps(output)
 
-while True:
+def run():
    c, addr = s.accept()     # Establish connection with client.
    c.sendall(bytes(data, encoding="utf-8"))
    c.close()                # Close the connection
+
+if __name__ == '__main__':
+    run
