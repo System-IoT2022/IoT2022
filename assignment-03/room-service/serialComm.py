@@ -10,11 +10,7 @@ class SerialCommunication:
         time.sleep(2)
 
 
-    def sendMsg(self, message):
-        currentime = datetime.datetime.now()
-        hour = currentime.strftime('%H:%M')
-        presence, brightness= message
-        msg = f'{presence} {brightness} {hour}'
+    def sendMsg(self, msg):
         print("forwarded to arduino : {}".format(msg))
         self.arduino.write(str.encode(msg))
         time.sleep(1)

@@ -4,7 +4,8 @@ import random
 import time
 
 from paho.mqtt import client as mqtt_client
-from serialComm import *
+#from serialComm import *
+from roomLogic import roomLogic
 
 
 BROKER = 'broker.hivemq.com'
@@ -13,7 +14,8 @@ TOPIC = "iot-server-esp-32149259214"
 CLIENT_ID = ""
 FLAG_CONNECTED = 0
 
-serialComm = SerialCommunication('/dev/ttyUSB0')
+roomController = roomLogic()
+#serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -22,12 +24,12 @@ def on_connect(client, userdata, flags, rc):
     else:
         print("Failed to connect, return code {rc}".format(rc=rc), )
 
-
 def on_message(client, userdata, msg):
     print("Received `{payload}` from `{topic}` topic".format(
         payload=msg.payload.decode(), topic=msg.topic))
-    messageStr = msg.payload.decode()
-    serialComm.sendMsg(messageStr.split(" "))
+    messageStr = msg.payload.decode().split(" ")
+    #serialComm.sendMsg(messageStr.split(" "))
+    roomController.espNotify(prescence=messageStr[0], brightness=messageStr[1])
 
 
 def connect_mqtt():
@@ -47,3 +49,5 @@ def run():
 
 if __name__ == '__main__':
     run()
+    while 1:
+        print("hello")
