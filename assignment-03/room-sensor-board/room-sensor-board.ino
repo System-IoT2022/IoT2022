@@ -19,7 +19,11 @@ Led* led;
 
 
 /* pirSensor with priority 1 */
-static void pirSensorTask(void* pvParameters) {
+ void pirSensorTask(void* pvParameters) {
+  while(1){
+  Serial.println("Pir task");
+  client.publish(topic, "hello mqtt");  
+  delay(1000);
   bool newState = pir->isDetected();
   if (state != newState) {
     state = newState;
@@ -27,19 +31,20 @@ static void pirSensorTask(void* pvParameters) {
       led->switchOn();
       //mqtt message there are people
       if (ligthSensor == NULL) {
-        xTaskCreate(ligthSensorTask, "ligthSensor", 100, NULL, 2, &ligthSensor);
+        //TaskCreate(ligthSensorTask, "ligthSensor", 100, NULL, 2, &ligthSensor);
       }
     } else {
       led->switchOff();
-      vTaskDelete(ligthSensor);
+      //vTaskDelete(ligthSensor);
       //mqtt message there aren't people
     }
+  }
   }
 }
 
 
 /* ligthSensor with priority 2 */
-static void ligthSensorTask(void* pvParameters) {
+ void ligthSensorTask(void* pvParameters) {
   if (lightSensor->getLightIntensity() <= THL) {
     //mqtt message
   }
@@ -56,7 +61,8 @@ void setup() {
   pir = new PirImpl(PIR_SENSOR_PIN);
   led = new Led(LED_PIN);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  xTaskCreate(pirSensorTask, "pirSensor", 100, NULL, 1, &pirSensor);
+  xTaskCreatePinnedToCore(pirSensorTask,"pirSensorTask",10000,NULL,1,&pirSensor,0);
+  delay(500);
 }
 
 void loop() {
