@@ -6,6 +6,8 @@ TURN_ON_LIGHT = 'light:1'
 ROLLER_BLINDS_UP = 'servo:1'
 ROLLER_BLINDS_DOWN = 'servo:0'
 BRIGHTNESS_THRESHOLD = 10
+MORNING = 8
+EVENING = 19
 
 serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 
@@ -24,14 +26,14 @@ class roomLogic:
         return float(brightness) < BRIGHTNESS_THRESHOLD
     def isDay(self):
         now = datetime.datetime.now()
-        today8am = now.replace(hour=8, minute=0, second=0, microsecond=0)
-        today7pm = now.replace(hour=20, minute=0, second=0, microsecond=0)
+        today8am = now.replace(hour=MORNING, minute=0, second=0, microsecond=0)
+        today7pm = now.replace(hour=EVENING, minute=0, second=0, microsecond=0)
         return now > today8am and now < today7pm
     
     def isNight(self):
         now = datetime.datetime.now()
-        today8am = now.replace(hour=8, minute=0, second=0, microsecond=0)
-        today7pm = now.replace(hour=20, minute=0, second=0, microsecond=0)
+        today8am = now.replace(hour=MORNING, minute=0, second=0, microsecond=0)
+        today7pm = now.replace(hour=EVENING, minute=0, second=0, microsecond=0)
         return now > today7pm or now < today8am
 
     def espNotify(self, prescence, brightness):
