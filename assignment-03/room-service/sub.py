@@ -8,7 +8,7 @@ from paho.mqtt import client as mqtt_client
 
 BROKER = 'broker.hivemq.com'
 PORT = 1883
-TOPIC = "proj-iot-id-554381721"
+TOPIC = "iot-server-esp-32149259214"
 # generate client ID with pub prefix randomly
 CLIENT_ID = ""
 FLAG_CONNECTED = 0
