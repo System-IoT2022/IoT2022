@@ -21,8 +21,8 @@ Led* led;
 /* pirSensor with priority 1 */
  void pirSensorTask(void* pvParameters) {
   while(1){
-  Serial.println("Pir task");
-  client.publish(topic, "hello mqtt");  
+  //Serial.println("Pir task");
+  client.publish(topic, "0 24.6");  
   delay(1000);
   bool newState = pir->isDetected();
   if (state != newState) {
@@ -72,16 +72,17 @@ void loop() {
   client.loop();
 
   unsigned long now = millis();
-  if (now - lastMsgTime > 10000) {
+  if (now - lastMsgTime > 3000) {
     lastMsgTime = now;
-    value++;
+   // value++;
 
+    value = 1;
     /* creating a msg in the buffer */
-    snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+    snprintf (msg, MSG_BUFFER_SIZE, "%ld", value);
 
-    Serial.println(String("Publishing message: ") + msg);
+   
     
     /* publishing the msg */
-    client.publish(topic, msg);  
+    client.publish(topic, "1 42.3");  
   }
 }
