@@ -4,13 +4,13 @@ from config import *
 class roomLogic:
     def __init__(self) -> None:
         self.prescence = '0'
-        self.brightness = '0'
-        self.lightState = 'off'
-        self.rollerBlinds = 'down'
+        #self.brightness = '0'
+        #self.lightState = 'off'
+        #self.rollerBlinds = '0'
     
     def espNotify(self, prescence, brightness):
         self.prescence = prescence
-        self.brighness = brightness
+       # self.brighness = brightness
         if(prescence == '0'):
             lightOff()
             if(isNight()):
