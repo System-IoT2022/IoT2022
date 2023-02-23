@@ -3,7 +3,7 @@ from serialComm import *
 
 TURN_OFF_LIGHT = 'light:0'
 TURN_ON_LIGHT = 'light:1'
-ROLLER_BLINDS_UP = 'servo:1'
+ROLLER_BLINDS_UP = 'servo:180'
 ROLLER_BLINDS_DOWN = 'servo:0'
 BRIGHTNESS_THRESHOLD = 10
 MORNING = 8
@@ -14,6 +14,7 @@ serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 class roomLogic:
     def __init__(self) -> None:
         self.prescence = 0
+        self.brightness = 0
     def lightOn(self):
         serialComm.sendMsg(TURN_ON_LIGHT)
     def lightOff(self):
@@ -38,6 +39,7 @@ class roomLogic:
 
     def espNotify(self, prescence, brightness):
         self.prescence = prescence
+        self.brighness = brightness
         if(prescence == '0'):
             self.lightOff()
             if(self.isNight()):
