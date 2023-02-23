@@ -4,7 +4,7 @@ import socket               # Import socket module
 import datetime
 import json
 import time
-from serverLogger import *
+from config import *
 
 s = socket.socket()         # Create a socket object
 host = socket.gethostname() # Get local machine name
@@ -30,6 +30,13 @@ def getTimeLightStatePair(lightState):
 def getData():
    lines = logger.read()
    return json.dumps(lines)
+
+def response(msg):
+   if msg == '0':
+      print("sending historical lighting data")
+      return getData()
+   if msg == '1':
+
 
 def run():
    c, addr = s.accept()     # Establish connection with client.
