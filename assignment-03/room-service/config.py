@@ -12,6 +12,8 @@ EVENING = 19
 serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 logger = ServerLogger('light.txt')
 
+def setRollerBlindsWithDegree(degree):
+    return f'servo:{degree}'
 
 def getDateHourMinuteSecondNow():
    now = datetime.datetime.now()

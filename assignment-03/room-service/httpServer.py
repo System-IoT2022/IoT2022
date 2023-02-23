@@ -36,19 +36,24 @@ def response(msg):
       print("sending historical lighting data")
       return getData()
    if msg == '1':
+      lightState = msg.split(' ')[1]
+      if lightState == 'on':
+         lightOn()
+      if lightState == 'off':
+         lightOff()
+   if msg == '2':
+      rollerBlindsDegree = msg.split(' ')[1]
+      setRollerBlindsWithDegree(rollerBlindsDegree)
 
 
-def run():
+def serverStart():
    c, addr = s.accept()     # Establish connection with client.
    print(c.recv(1024))
    c.sendall(bytes(getData(), encoding="utf-8"))
    c.close()                # Close the connection
 
 if __name__ == '__main__':
-    while True:
-      #logger.write(getTimeLightStatePair('on'))
-      #a = logger.write('on')
-      #print(a)
-      run()
+   while True:
+      serverStart()
       time.sleep(1)
       
