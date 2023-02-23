@@ -38,12 +38,15 @@ def response(msg):
    if msg == '1':
       lightState = msg.split(' ')[1]
       if lightState == 'on':
+         print("sending light on")
          lightOn()
       if lightState == 'off':
+         print("sending light off")
          lightOff()
    if msg == '2':
       rollerBlindsDegree = msg.split(' ')[1]
       setRollerBlindsWithDegree(rollerBlindsDegree)
+      print(f"sending roller blinds degree: {rollerBlindsDegree}")
 
 
 def serverStart():
