@@ -1,5 +1,6 @@
 import datetime
 from serialComm import *
+from serverLogger import *
 
 TURN_OFF_LIGHT = 'light:0'
 TURN_ON_LIGHT = 'light:1'
@@ -10,15 +11,28 @@ MORNING = 8
 EVENING = 19
 
 serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
+logger = ServerLogger('light.txt')
+
+def getDateHourMinuteSecondNow():
+   now = datetime.datetime.now
+   daten = datetime.datetime.strptime(now, "%Y-%m-%d %H:%M:%S")
+   return f'{daten.hour}:{daten.minute}:{daten.second}'
+
+# the lightState can be 'on' or 'off'
+def getTimeLightStatePair(lightState):
+    key = getDateHourMinuteSecondNow()
+    return f'{key}:{lightState}'
 
 class roomLogic:
     def __init__(self) -> None:
-        self.prescence = 0
-        self.brightness = 0
+        self.prescence = '0'
+        self.brightness = '0'
     def lightOn(self):
         serialComm.sendMsg(TURN_ON_LIGHT)
+        logger.write(getTimeLightStatePair('on'))
     def lightOff(self):
         serialComm.sendMsg(TURN_OFF_LIGHT)
+        logger.write(getTimeLightStatePair('off'))
     def rollerBlindsUp(self):
         serialComm.sendMsg(ROLLER_BLINDS_UP)
     def rollerBlindsDown(self):
@@ -42,6 +56,7 @@ class roomLogic:
         self.brighness = brightness
         if(prescence == '0'):
             self.lightOff()
+
             if(self.isNight()):
                 self.rollerBlindsDown()
         if(prescence == '1'):
