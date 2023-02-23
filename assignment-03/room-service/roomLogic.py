@@ -14,8 +14,8 @@ serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 logger = ServerLogger('light.txt')
 
 def getDateHourMinuteSecondNow():
-   now = datetime.datetime.now
-   daten = datetime.datetime.strptime(now, "%Y-%m-%d %H:%M:%S")
+   now = datetime.datetime.now()
+   daten = datetime.datetime.strptime(str(now), "%Y-%m-%d %H:%M:%S")
    return f'{daten.hour}:{daten.minute}:{daten.second}'
 
 # the lightState can be 'on' or 'off'
