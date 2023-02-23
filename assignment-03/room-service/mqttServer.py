@@ -4,7 +4,6 @@ import random
 import time
 
 from paho.mqtt import client as mqtt_client
-#from serialComm import *
 from roomLogic import roomLogic
 
 
@@ -15,7 +14,6 @@ CLIENT_ID = ""
 FLAG_CONNECTED = 0
 
 roomController = roomLogic()
-#serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -42,12 +40,9 @@ def connect_mqtt():
     return client
 
 
-def run():
-    client = connect_mqtt()
-    client.loop_forever()
-
-
 if __name__ == '__main__':
-    run()
-    while 1:
-        print("hello")
+    client = connect_mqtt()
+    while True:
+        client.loop()
+        roomController.automaticNotify()
+    

@@ -13,3 +13,4 @@ class SerialCommunication:
     def sendMsg(self, msg):
         print("forwarded to arduino : {}".format(msg))
         self.arduino.write(str.encode(msg))
+        time.sleep(1)
