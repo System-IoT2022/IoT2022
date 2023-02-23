@@ -33,6 +33,7 @@ def getData():
 
 def run():
    c, addr = s.accept()     # Establish connection with client.
+   print(c.recv(1024))
    c.sendall(bytes(getData(), encoding="utf-8"))
    c.close()                # Close the connection
 

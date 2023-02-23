@@ -27,6 +27,8 @@ class roomLogic:
     def __init__(self) -> None:
         self.prescence = '0'
         self.brightness = '0'
+        self.lightState = 'off'
+        self.rollerBlinds = 'down'
     def lightOn(self):
         serialComm.sendMsg(TURN_ON_LIGHT)
         logger.write(getTimeLightStatePair('on'))
@@ -56,7 +58,6 @@ class roomLogic:
         self.brighness = brightness
         if(prescence == '0'):
             self.lightOff()
-
             if(self.isNight()):
                 self.rollerBlindsDown()
         if(prescence == '1'):

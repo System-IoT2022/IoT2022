@@ -42,7 +42,9 @@ def connect_mqtt():
 
 if __name__ == '__main__':
     client = connect_mqtt()
+    client.loop_forever()
     while True:
-        client.loop()
         roomController.automaticNotify()
+        print('periodic check')
+        time.sleep(60)
     

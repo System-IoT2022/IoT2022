@@ -1,12 +1,21 @@
-#!/usr/bin/python           # This is client.py file
+import socket
+import time
 
-import socket               # Import socket module
+PORT = 12345
 
-s = socket.socket()         # Create a socket object
-host = socket.gethostname() # Get local machine name
-port = 12345           # Reserve a port for your service.
+def send_message(host, port, message):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((host, port))
+        s.sendall(message.encode())
+        print(f"Sent message: {message}")
+        print(s.recv(1024))
 
-s.connect((host, port))
-output = s.recv(1024).decode("utf-8")
-print ("Received {}".format(output))
-s.close()                      # Close the socket when done
+# 0 show lighting history
+# 1 [0-1] light on/off
+# 2 [degree]  roller blind degree
+if __name__ == "__main__":
+    while True:
+        msg = '0'
+        send_message(socket.gethostname(), PORT, msg)
+        time.sleep(1)
+        
