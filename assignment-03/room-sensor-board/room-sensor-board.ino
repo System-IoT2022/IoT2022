@@ -10,43 +10,47 @@
 TaskHandle_t pirSensor;
 TaskHandle_t ligthSensor;
 
-bool state;
+bool state=false;
 PirImpl* pir;
-LightSensor* lightSensor;
+LightSensorImpl* lightSensor;
 Led* led;
 
 
 
 
 /* pirSensor with priority 1 */
- void pirSensorTask(void* pvParameters) {
-  while(1){
-  Serial.println("Pir task");
-  client.publish(topic, "hello mqtt");  
-  delay(1000);
-  bool newState = pir->isDetected();
-  if (state != newState) {
-    state = newState;
-    if (state) {
-      led->switchOn();
-      //mqtt message there are people
-      if (ligthSensor == NULL) {
-        //TaskCreate(ligthSensorTask, "ligthSensor", 100, NULL, 2, &ligthSensor);
+void pirSensorTask(void* pvParameters) {
+  while (1) {
+    //Serial.println("Pir task");
+    client.publish(topic, "0 24.6");
+    
+    bool newState = pir->isDetected();
+    if (state != newState) {
+      state = newState;
+      if (state) {
+        led->switchOn();
+        //mqtt message there are people
+      } else {
+        led->switchOff();
+        //mqtt message there aren't people
       }
-    } else {
-      led->switchOff();
-      //vTaskDelete(ligthSensor);
-      //mqtt message there aren't people
     }
-  }
+    delay(1000);
   }
 }
 
 
 /* ligthSensor with priority 2 */
- void ligthSensorTask(void* pvParameters) {
-  if (lightSensor->getLightIntensity() <= THL) {
-    //mqtt message
+void ligthSensorTask(void* pvParameters) {
+  while (true) {
+    if (state) {
+
+      if (lightSensor->getLightIntensity() <= THL) {
+        
+        client.publish(topic, "low ligth");
+      }
+    }
+    delay(1000);
   }
 }
 
@@ -61,7 +65,7 @@ void setup() {
   pir = new PirImpl(PIR_SENSOR_PIN);
   led = new Led(LED_PIN);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  xTaskCreatePinnedToCore(pirSensorTask,"pirSensorTask",10000,NULL,1,&pirSensor,0);
+  xTaskCreatePinnedToCore(pirSensorTask, "pirSensorTask", 10000, NULL, 1, &pirSensor, 0);
   delay(500);
 }
 
@@ -70,18 +74,19 @@ void loop() {
     reconnect();
   }
   client.loop();
-
+  //client.loop_forever(); //not implemneted for esp32 
   unsigned long now = millis();
-  if (now - lastMsgTime > 10000) {
+  if (now - lastMsgTime > 3000) {
     lastMsgTime = now;
-    value++;
+    // value++;
 
+    value = 1;
     /* creating a msg in the buffer */
-    snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+    snprintf(msg, MSG_BUFFER_SIZE, "%ld", value);
 
-    Serial.println(String("Publishing message: ") + msg);
-    
+
+
     /* publishing the msg */
-    client.publish(topic, msg);  
+    client.publish(topic, "1 42.3");
   }
 }

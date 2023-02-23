@@ -1,6 +1,5 @@
 import flet as ft
 
-textCurtainVal=0
 
 def main(page: ft.Page):
     page.title = "Flet counter example"
@@ -8,7 +7,7 @@ def main(page: ft.Page):
 
     btn0 = ft.ElevatedButton("switch on")
     btn1 = ft.ElevatedButton("switch off")
-    slider = ft.Slider(min=0, max=100, divisions=10, rotate=1.57, on_change=updateCurtain()) 
+    slider = ft.Slider(min=0, max=100, divisions=10, rotate=1.57) 
     text0= ft.Text("Light")
     text1=ft.Text("Curtain")
     
@@ -32,7 +31,6 @@ def main(page: ft.Page):
                 ft.Column(
                 [
                     text1,
-                    textCurtainVal,
                     slider
                 ],
                 #alignment=ft.MainAxisAlignment.CENTER,
@@ -46,7 +44,6 @@ def main(page: ft.Page):
         )
         )
         
-def updateCurtain(val):
-    textCurtainVal.value = val
+
 
 ft.app(target=main)
