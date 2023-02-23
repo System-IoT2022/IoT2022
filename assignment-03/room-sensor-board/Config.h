@@ -4,8 +4,8 @@
 
 /* wifi network info */
 
-const char* ssid = "Spot";
-const char* password = "spotmqtt";
+const char* ssid = "FASTWEB-9250C5b - 2.4 ghz";
+const char* password = "8ZKY4MZ38H";
 
 /* MQTT server address */
 const char* mqtt_server = "broker.hivemq.com";
