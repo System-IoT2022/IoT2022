@@ -11,13 +11,12 @@
 #include "RoomTask.h"
 #include "Led.h"
 #include "servo_motor_impl.h"
-#include <LiquidCrystal.h>
 #include <Arduino.h>
-#include "MsgService.h"
-
 /*pin of sensors*/
 #define SERVO_MOTOR_PIN 11
 #define LED_PIN 10
+#define BT_RX_PIN 3
+#define BT_TX_PIN 2
 
 /*project configurations*/
 #define MAX_TASKS 10

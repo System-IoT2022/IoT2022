@@ -2,6 +2,9 @@
 #include "Scheduler.h"
 #include "Config.h"
 
+#include "MsgService.h"
+#include "MsgServiceBT.h"
+
 bool TaskController::addTask(RoomTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
     if (Scheduler::addTask(task)) {
@@ -16,30 +19,46 @@ bool TaskController::addTask(RoomTask* task) {
 void TaskController::init(int period) {
 
   Task::init(period);
-  RoomTask* t0 = new LigthTask();  
-  this->addTask(t0);
-  t0->init(0);
-  
-  RoomTask* t1 = new rollerBlindTask();
-  this->addTask(t1);
-  t1->init(0);
+  RoomTask* ligth = new LigthTask();
+  this->addTask(ligth);
+  ligth->init(0);
+
+  RoomTask* motor = new rollerBlindTask();
+  this->addTask(motor);
+  motor->init(0);
 
   MsgService.init();
 }
 void TaskController::execute() {
-  //get message from bluetooth and serial
-  //if from bluetooth send it in serial too
-  switch(1){
-    case 1:
-
-        this->taskList[0]->setValue(0);
-      break;
-    case 2: 
-        this->taskList[1]->setValue(0);
-      break;
+  Msg* msg;
+  if (MsgService.isMsgAvailable()) {
+    //serial msg
+    msg = MsgService.receiveMsg();
   }
-
-  //MsgService.sendMsg(String("waterlevel-") );
+  //get message from bluetooth and serial
+  if (msgServiceBT.isMsgAvailable()) {
+    //bluetooth user msg
+    msg = msgServiceBT.receiveMsg();
+    MsgService.sendMsg(msg->getContent());
+  }
+  if (String(msg->getContent()).substring(0, 6) == "light:") {
+    int val = String(msg->getContent()).substring(6).toInt();
+    val = max(val, 0);
+    val = min(val, 255);
+    /* NOT TO FORGET: message deallocation */
+    this->taskList[0]->setValue(val);
+  } else {
+    if (String(msg->getContent()).substring(0, 6) == "servo:") {
+      int val = String(msg->getContent()).substring(6).toInt();
+      val = max(val, 0);
+      val = min(val, 180);
+      this->taskList[1]->setValue(val);
+    }
+  }
+  if (String(msg->getContent()) == "config") {
+    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + ",roller:" ++String(this->taskList[1]->getValue()));
+  }
+  delete msg;
   return;
 }
 Task** TaskController::getTask() {

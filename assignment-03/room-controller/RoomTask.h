@@ -7,6 +7,7 @@ class RoomTask : public Task {
   int value;
 public:
   virtual void setValue(int value);
+  virtual int getValue( );
 };
 
 #endif
