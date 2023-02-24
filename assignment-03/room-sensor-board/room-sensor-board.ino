@@ -5,12 +5,12 @@
 #include "Config.h"
 #include "string.h"
 
-#define THL 120
+#define THL 255
 #define LIGHT_SENSOR_PIN 6
 #define PIR_SENSOR_PIN 5
 #define LED_PIN 4
-TaskHandle_t pirSensor;
-TaskHandle_t ligthSensor;
+TaskHandle_t pirTask;
+TaskHandle_t ligthTask;
 
 bool state=false;
 PirImpl* pir;
@@ -45,11 +45,11 @@ void lightSensorTask(void* pvParameters) {
     if (state) {
 
       if (lightSensor->getLightIntensity() <= THL) {
-        //char* str = "brightness:"  "0";
-        char cstr[15];
+        char cstr[3] = "";
         int num = lightSensor->getLightIntensity();
         itoa(num, cstr, 10);
-        char* str = strcat("brightness:",cstr);
+        char str[20] = "brightness:";
+        strcat(str, cstr);
         client.publish(topic, str);
       }
     }
@@ -68,7 +68,9 @@ void setup() {
   pir = new PirImpl(PIR_SENSOR_PIN);
   led = new Led(LED_PIN);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  xTaskCreatePinnedToCore(pirSensorTask, "pirSensorTask", 10000, NULL, 1, &pirSensor, 0);
+  xTaskCreatePinnedToCore(pirSensorTask, "pirSensorTask", 10000, NULL, 1, &pirTask, 0);
+  delay(500);
+  xTaskCreatePinnedToCore(lightSensorTask, "lightSensorTask", 10000, NULL, 1, &ligthTask, 1);
   delay(500);
 }
 
