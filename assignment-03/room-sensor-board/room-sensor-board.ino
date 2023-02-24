@@ -27,11 +27,11 @@ void pirSensorTask(void* pvParameters) {
       if (state) {
         led->switchOn();
         //mqtt message there are people
-        client.publish(topic, "presence:1");
+        client.publish(topic, "presence 1");
       } else {
         led->switchOff();
         //mqtt message there aren't people
-        client.publish(topic, "presence:0");
+        client.publish(topic, "presence 0");
       }
     }
     delay(1000);
@@ -48,7 +48,7 @@ void lightSensorTask(void* pvParameters) {
         char cstr[3] = "";
         int num = lightSensor->getLightIntensity();
         itoa(num, cstr, 10);
-        char str[20] = "brightness:";
+        char str[20] = "brightness ";
         strcat(str, cstr);
         client.publish(topic, str);
       }
