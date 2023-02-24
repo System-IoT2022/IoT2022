@@ -31,10 +31,10 @@ def getData():
    lines = logger.read()
    return json.dumps(lines)
 
-def response(msg):
+def response(msg, client):
    if msg == '0':
       print("sending historical lighting data")
-      return getData()
+      client.sendall(bytes(getData(), encoding="utf-8"))
    if msg == '1':
       lightState = msg.split(' ')[1]
       if lightState == 'on':
@@ -51,8 +51,8 @@ def response(msg):
 
 def serverStart():
    c, addr = s.accept()     # Establish connection with client.
-   print(c.recv(1024))
-   c.sendall(bytes(getData(), encoding="utf-8"))
+   msg = c.recv(1024)
+   response(msg, c)
    c.close()                # Close the connection
 
 if __name__ == '__main__':

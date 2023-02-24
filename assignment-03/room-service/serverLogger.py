@@ -9,7 +9,7 @@ class ServerLogger:
 
     def write(self, msg):
         data = self.read()
-        print(data)
+        #print(data)
         data.append(msg)
         self.thread_lock.acquire()
         with open(self.fileName, "w") as file_object:

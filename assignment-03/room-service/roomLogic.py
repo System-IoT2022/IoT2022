@@ -8,18 +8,21 @@ class roomLogic:
         #self.lightState = 'off'
         #self.rollerBlinds = '0'
     
-    def espNotify(self, prescence, brightness):
-        self.prescence = prescence
-       # self.brighness = brightness
-        if(prescence == '0'):
-            lightOff()
-            if(isNight()):
-                rollerBlindsDown()
-        if(prescence == '1'):
-            if(tooDark(brightness)):
+    def espNotify(self, option, value):
+        if option == 'presence':
+            self.prescence = value
+            if self.prescence == '0':
+                lightOff()
+                if(isNight()):
+                    rollerBlindsDown()
+            elif self.prescence == '1':
+                if isDay():
+                    rollerBlindsUp()
+
+        if option == 'brightness':
+            if tooDark(value):
                 lightOn()
-            if(isDay()):
-                rollerBlindsUp()
+                
     
     def automaticNotify(self):
         #this task should be checked periodically...No body will tell me 

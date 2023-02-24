@@ -3,36 +3,35 @@
 #include "LightSensorImpl.h"
 #include "Led.h"
 #include "Config.h"
-#define THL 120
-#define LIGHT_SENSOR_PIN 5
+#include "string.h"
+
+#define THL 255
+#define LIGHT_SENSOR_PIN 6
 #define PIR_SENSOR_PIN 5
-#define LED_PIN 5
-TaskHandle_t pirSensor;
-TaskHandle_t ligthSensor;
+#define LED_PIN 4
+TaskHandle_t pirTask;
+TaskHandle_t ligthTask;
 
 bool state=false;
 PirImpl* pir;
 LightSensorImpl* lightSensor;
 Led* led;
 
-
-
-
 /* pirSensor with priority 1 */
 void pirSensorTask(void* pvParameters) {
   while (1) {
     //Serial.println("Pir task");
-    client.publish(topic, "0 24.6");
-    
     bool newState = pir->isDetected();
     if (state != newState) {
       state = newState;
       if (state) {
         led->switchOn();
         //mqtt message there are people
+        client.publish(topic, "presence 1");
       } else {
         led->switchOff();
         //mqtt message there aren't people
+        client.publish(topic, "presence 0");
       }
     }
     delay(1000);
@@ -41,13 +40,17 @@ void pirSensorTask(void* pvParameters) {
 
 
 /* ligthSensor with priority 2 */
-void ligthSensorTask(void* pvParameters) {
+void lightSensorTask(void* pvParameters) {
   while (true) {
     if (state) {
 
       if (lightSensor->getLightIntensity() <= THL) {
-        
-        client.publish(topic, "low ligth");
+        char cstr[3] = "";
+        int num = lightSensor->getLightIntensity();
+        itoa(num, cstr, 10);
+        char str[20] = "brightness ";
+        strcat(str, cstr);
+        client.publish(topic, str);
       }
     }
     delay(1000);
@@ -65,7 +68,9 @@ void setup() {
   pir = new PirImpl(PIR_SENSOR_PIN);
   led = new Led(LED_PIN);
   lightSensor = new LightSensorImpl(LIGHT_SENSOR_PIN);
-  xTaskCreatePinnedToCore(pirSensorTask, "pirSensorTask", 10000, NULL, 1, &pirSensor, 0);
+  xTaskCreatePinnedToCore(pirSensorTask, "pirSensorTask", 10000, NULL, 1, &pirTask, 0);
+  delay(500);
+  xTaskCreatePinnedToCore(lightSensorTask, "lightSensorTask", 10000, NULL, 1, &ligthTask, 1);
   delay(500);
 }
 
@@ -87,6 +92,6 @@ void loop() {
 
 
     /* publishing the msg */
-    client.publish(topic, "1 42.3");
+    //client.publish(topic, "1 42.3");
   }
 }
