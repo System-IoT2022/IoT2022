@@ -28,7 +28,7 @@ def on_message(client, userdata, msg):
     
     messageStr = msg.payload.decode().split(":")
     #serialComm.sendMsg(messageStr.split(" "))
-    roomController.espNotify(prescence=messageStr[0], brightness=messageStr[1])
+    roomController.espNotify(option=messageStr[0], value=messageStr[1])
 
 
 def connect_mqtt():

@@ -18,7 +18,7 @@ def setRollerBlindsWithDegree(degree):
 
 def getDateHourMinuteSecondNow():
    now = datetime.datetime.now()
-   daten = datetime.datetime.strptime(str(now), "%Y-%m-%d %H:%M:%S")
+   daten = datetime.datetime.strptime(str(now), "%Y-%m-%d %H:%M:%S.%f")
    return f'{daten.hour}:{daten.minute}:{daten.second}'
 
 # the lightState can be 'on' or 'off'
@@ -41,16 +41,16 @@ def rollerBlindsUp():
 def rollerBlindsDown():
     serialComm.sendMsg(ROLLER_BLINDS_DOWN)
 
-def tooDark(self, brightness):
+def tooDark(brightness):
     return float(brightness) < BRIGHTNESS_THRESHOLD
 
-def isDay(self):
+def isDay():
     now = datetime.datetime.now()
     today8am = now.replace(hour=MORNING, minute=0, second=0, microsecond=0)
     today7pm = now.replace(hour=EVENING, minute=0, second=0, microsecond=0)
     return now > today8am and now < today7pm
 
-def isNight(self):
+def isNight():
     now = datetime.datetime.now()
     today8am = now.replace(hour=MORNING, minute=0, second=0, microsecond=0)
     today7pm = now.replace(hour=EVENING, minute=0, second=0, microsecond=0)
