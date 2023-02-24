@@ -25,7 +25,8 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     print("Received `{payload}` from `{topic}` topic".format(
         payload=msg.payload.decode(), topic=msg.topic))
-    messageStr = msg.payload.decode().split(" ")
+    
+    messageStr = msg.payload.decode().split(":")
     #serialComm.sendMsg(messageStr.split(" "))
     roomController.espNotify(prescence=messageStr[0], brightness=messageStr[1])
 
