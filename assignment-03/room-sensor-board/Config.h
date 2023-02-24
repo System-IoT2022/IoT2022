@@ -4,8 +4,11 @@
 
 /* wifi network info */
 
-const char* ssid = "FASTWEB-9250C5b - 2.4 ghz";
-const char* password = "8ZKY4MZ38H";
+//const char* ssid = "FASTWEB-9250C5b - 2.4 ghz";
+//const char* password = "8ZKY4MZ38H";
+
+const char* ssid = "AndroidAP";
+const char* password = "11111111";
 
 /* MQTT server address */
 const char* mqtt_server = "broker.hivemq.com";

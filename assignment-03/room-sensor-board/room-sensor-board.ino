@@ -3,10 +3,12 @@
 #include "LightSensorImpl.h"
 #include "Led.h"
 #include "Config.h"
+#include "string.h"
+
 #define THL 120
-#define LIGHT_SENSOR_PIN 5
+#define LIGHT_SENSOR_PIN 6
 #define PIR_SENSOR_PIN 5
-#define LED_PIN 5
+#define LED_PIN 4
 TaskHandle_t pirSensor;
 TaskHandle_t ligthSensor;
 
@@ -15,24 +17,21 @@ PirImpl* pir;
 LightSensorImpl* lightSensor;
 Led* led;
 
-
-
-
 /* pirSensor with priority 1 */
 void pirSensorTask(void* pvParameters) {
   while (1) {
     //Serial.println("Pir task");
-    client.publish(topic, "0 24.6");
-    
     bool newState = pir->isDetected();
     if (state != newState) {
       state = newState;
       if (state) {
         led->switchOn();
         //mqtt message there are people
+        client.publish(topic, "presence:1");
       } else {
         led->switchOff();
         //mqtt message there aren't people
+        client.publish(topic, "presence:0");
       }
     }
     delay(1000);
@@ -41,13 +40,17 @@ void pirSensorTask(void* pvParameters) {
 
 
 /* ligthSensor with priority 2 */
-void ligthSensorTask(void* pvParameters) {
+void lightSensorTask(void* pvParameters) {
   while (true) {
     if (state) {
 
       if (lightSensor->getLightIntensity() <= THL) {
-        
-        client.publish(topic, "low ligth");
+        //char* str = "brightness:"  "0";
+        char cstr[15];
+        int num = lightSensor->getLightIntensity();
+        itoa(num, cstr, 10);
+        char* str = strcat("brightness:",cstr);
+        client.publish(topic, str);
       }
     }
     delay(1000);
@@ -87,6 +90,6 @@ void loop() {
 
 
     /* publishing the msg */
-    client.publish(topic, "1 42.3");
+    //client.publish(topic, "1 42.3");
   }
 }
