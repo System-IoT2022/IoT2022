@@ -1,9 +1,11 @@
+#include "esp32-hal-gpio.h"
 #include "Pirimpl.h"
 #include "Arduino.h"
 
 PirImpl::PirImpl(int pin){
   this->pin = pin;
   this->detectedStatus = false;
+  pinMode(pin, INPUT);
 }
 
 static void print(int current){
@@ -16,9 +18,9 @@ static void print(int current){
 
 bool PirImpl::isDetected(){
    int current = digitalRead(this->pin);
+    //print(current);
   if (current != detectedStatus ){
     detectedStatus = current;
-    //print(current);
   }
   return detectedStatus;
 }
