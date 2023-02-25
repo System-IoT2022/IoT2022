@@ -14,6 +14,7 @@ public:
   void execute();
   void setValue(int value);
   void setActive(bool active);
+  int getValue();
 };
 
 
@@ -27,6 +28,7 @@ public:
   void execute();
   void setValue(int value);
   void setActive(bool active);
+  int getValue();
 };
 
 #endif
