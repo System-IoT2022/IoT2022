@@ -56,8 +56,9 @@ void TaskController::execute() {
     }
   }
   if (String(msg->getContent()) == "config") {
-    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + ",roller:" ++String(this->taskList[1]->getValue()));
+    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + " roller:" +String(this->taskList[1]->getValue()));
   }
+  if(msg!=NULL)
   delete msg;
   return;
 }
