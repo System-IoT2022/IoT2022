@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,7 +28,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -37,26 +38,27 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_SCAN = 759;
     private static final int LEGACY_REQUEST_PERMISSION_BLUETOOTH = 555;
     private static final int REQUEST_PERMISSION_ADMIN = 556;
-
     public static final String X_BLUETOOTH_DEVICE_EXTRA = "X_BLUETOOTH_DEVICE_EXTRA";
+    private Switch sw;
+    private Button remoteButton;
+    private boolean ledState;
+    //bluetooth vars
+    private BluetoothAdapter btAdapter;
+    Set<BluetoothDevice> pairedDevices;
+    private ConnectThread connectionThread;
+    private BluetoothSocket btSocket;
+
+
+
 
     private OutputStream bluetoothOutputStream;
-    private Switch sw;
 
-    private boolean ledState;
-    private BluetoothClientConnectionThread connectionThread;
     private List<BluetoothDevice> scannedDevices = new ArrayList<>();
     private List<String> scannedNameList = new ArrayList<>();
 
-    private List<BluetoothDevice> pairedDevices = new ArrayList<>();
-    private List<String> pairedNameList = new ArrayList<>();
-    private BluetoothAdapter btAdapter;
-
-    private ListView scannedListView;
-    private ListView pairedListView;
 
     private ArrayAdapter<String> scannedListAdapter;
-    private ArrayAdapter<String> pairedListAdapter;
+
     private boolean bluetoothEnabled = false;
 
     @Override
@@ -65,12 +67,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sw = (Switch) findViewById(R.id.switch1);
-        sw.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // your handler code here
-                sendMessage("changeLight");
-            }
-        });
+        remoteButton = (Button) findViewById(R.id.remoteButton);
+//        sw.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                // your handler code here
+//                sendMessage("changeLight");
+//            }
+//        });
 
     }
     private void sendMessage(String message) {
@@ -85,15 +88,44 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     protected void onStart() {
         super.onStart();
         Intent intent = getIntent();
-        BluetoothDevice bluetoothDevice = intent.getParcelableExtra(ScanActivity.X_BLUETOOTH_DEVICE_EXTRA);
+
+        //get adapter
+        BluetoothDevice bluetoothDevice = intent.getParcelableExtra(X_BLUETOOTH_DEVICE_EXTRA);
         btAdapter = getSystemService(BluetoothManager.class).getAdapter();
-        //Log.i(C.TAG, "Connecting to " + bluetoothDevice.getName());
-        connectionThread = new BluetoothClientConnectionThread(bluetoothDevice, btAdapter, this::manageConnectedSocket);
+        //check bt availability
+        if (!btAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+        //check for associated device by name
+        pairedDevices = btAdapter.getBondedDevices();
+        BluetoothDevice btArduino = checkBtPaired("HC-05");
+        if(btArduino==null){
+            logMessage("bluetooth non associato");
+            return;
+        }
+        Log.i(C.TAG, "Connecting to " + bluetoothDevice.getName());
+        connectionThread = new ConnectThread(btArduino, btAdapter, btSocket);
         connectionThread.start();
+
+    }
+
+    @SuppressLint("MissingPermission")
+    private BluetoothDevice checkBtPaired(String devName){
+        if (pairedDevices.size() > 0) {
+            // There are paired devices. Get the name and address of each paired device.
+            for (BluetoothDevice device : pairedDevices) {
+               if(device.getName() == devName) {
+                   return device;
+               }
+            }
+        }
+        return null;
     }
 
     private void manageConnectedSocket(BluetoothSocket socket) {
@@ -104,8 +136,8 @@ public class MainActivity extends AppCompatActivity {
             Log.e(C.TAG, "Error occurred when creating output stream", e);
         }
         runOnUiThread(() -> {
-            //remoteButton.setEnabled(true);
-            //remoteButton.setBackgroundColor(Color.RED);
+            remoteButton.setEnabled(true);
+            remoteButton.setBackgroundColor(Color.RED);
             sw.setChecked(false);
         });
     }
