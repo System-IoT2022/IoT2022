@@ -6,11 +6,11 @@ TURN_OFF_LIGHT = 'light:0'
 TURN_ON_LIGHT = 'light:1'
 ROLLER_BLINDS_UP = 'servo:180'
 ROLLER_BLINDS_DOWN = 'servo:0'
-BRIGHTNESS_THRESHOLD = 100
+BRIGHTNESS_THRESHOLD = 255
 MORNING = 8
 EVENING = 19
 
-serialComm = SerialCommunication('/dev/ttyUSB0') #put the port
+serialComm = SerialCommunication('/dev/ttyACM0', 9600, 5) #put the port
 logger = ServerLogger('light.txt')
 
 def setRollerBlindsWithDegree(degree):

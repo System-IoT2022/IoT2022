@@ -8,8 +8,8 @@ void setup(){
   Scheduler::init(PERIOD);
   TaskController* t0 = new TaskController();
   t0->init(0);
+  t0->setActive(true);
   Scheduler::addTask(t0);
-
 }
 
 void loop(){

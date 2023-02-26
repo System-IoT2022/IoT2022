@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "Taskcontroller.h"
 #include "Scheduler.h"
 #include "Config.h"
@@ -27,24 +28,41 @@ void TaskController::init(int period) {
   this->addTask(motor);
   motor->init(0);
 
-  MsgService.init();
+    MsgService.init();
+ // msgServiceBT.init();
+}
+
+/*Elaborate on the messages sent from the server through serial communications*/
+void static responseFromServer(){
+
+   if (Serial.available()){
+     //this->taskList[0]->setValue(255);
+     char data = Serial.read();
+    }
+  
 }
 void TaskController::execute() {
+
   Msg* msg;
   if (MsgService.isMsgAvailable()) {
     //serial msg
     msg = MsgService.receiveMsg();
+    this->taskList[0]->setValue(255);
+   
   }
   //get message from bluetooth and serial
-  if (msgServiceBT.isMsgAvailable()) {
+ /* if (msgServiceBT.isMsgAvailable()) {
     //bluetooth user msg
     msg = msgServiceBT.receiveMsg();
     MsgService.sendMsg(msg->getContent());
-  }
+  }*/
+
+
   if (String(msg->getContent()).substring(0, 6) == "light:") {
     int val = String(msg->getContent()).substring(6).toInt();
+   // Serial.println(val);
     val = max(val, 0);
-    val = min(val, 255);
+    val = min(val, 1);
     /* NOT TO FORGET: message deallocation */
     this->taskList[0]->setValue(val);
   } else {

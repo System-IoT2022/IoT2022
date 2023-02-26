@@ -22,19 +22,22 @@ rollerBlindTask::rollerBlindTask() {
 void LigthTask::init(int period) {
   Task::init(period);
   this->led = new Led(LED_PIN);
+  this->value = 0;
 }
 void LigthTask::execute() {
-  this->setActive(false);
+  //this->setActive(false);
 }
 
 void LigthTask::setActive(bool active) {
   Task::setActive(active);
 }
 void LigthTask::setValue(int value) {
+ // Serial.println("receiving light signal");
   if (this->value == value) {
-    this->setActive(false);
+    //this->setActive(false);
   } else {
-    this->value = value;
+    //this->value = value;
+    this->led->switchOn();
     this->setActive(true);
   }
 }
