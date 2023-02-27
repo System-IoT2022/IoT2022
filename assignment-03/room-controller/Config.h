@@ -22,7 +22,7 @@
 #define MAX_TASKS 10
 #define NORMALCHECK 1000
 #define PREALARMCHECK 500
-#define PERIOD 1000
+#define PERIOD 1000 
 
 
 #endif

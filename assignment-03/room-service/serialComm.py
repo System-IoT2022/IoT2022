@@ -10,6 +10,7 @@ class SerialCommunication:
 
     def sendMsg(self, msg):
         print("forwarded to arduino : {}".format(msg))
+        msg += '\n'
         self.arduino.write(str.encode(msg, 'utf-8'))
         #self.arduino.write(bytes(msg, 'utf-8'))
         time.sleep(1)

@@ -33,10 +33,11 @@ void LigthTask::setActive(bool active) {
 }
 void LigthTask::setValue(int value) {
  // Serial.println("receiving light signal");
-  if (this->value == value) {
-    //this->setActive(false);
+    this->value = value;
+  if (this->value <= 0) {
+    this->led->switchOff();
+    this->setActive(false);
   } else {
-    //this->value = value;
     this->led->switchOn();
     this->setActive(true);
   }

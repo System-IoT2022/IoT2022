@@ -4,7 +4,7 @@ import time
 ser = serial.Serial('/dev/ttyACM0', 9600)  # replace 'COM3' with the name of your serial port
 
 while True:
-    message = input("Enter a message to send to Arduino: ")
+    message = input("Enter a message to send to Arduino: ") + '\n'
     ser.write(message.encode('utf-8'))  # send the message to the Arduino
     time.sleep(0.1)  # wait for a short time to give the Arduino time to process the message
 

@@ -29,33 +29,24 @@ void TaskController::init(int period) {
   motor->init(0);
 
     MsgService.init();
- // msgServiceBT.init();
+    msgServiceBT.init();
 }
 
-/*Elaborate on the messages sent from the server through serial communications*/
-void static responseFromServer(){
-
-   if (Serial.available()){
-     //this->taskList[0]->setValue(255);
-     char data = Serial.read();
-    }
-  
-}
 void TaskController::execute() {
 
   Msg* msg;
   if (MsgService.isMsgAvailable()) {
     //serial msg
     msg = MsgService.receiveMsg();
-    this->taskList[0]->setValue(255);
+   // this->taskList[0]->setValue(255);
    
   }
   //get message from bluetooth and serial
- /* if (msgServiceBT.isMsgAvailable()) {
+  if (msgServiceBT.isMsgAvailable()) {
     //bluetooth user msg
     msg = msgServiceBT.receiveMsg();
     MsgService.sendMsg(msg->getContent());
-  }*/
+  }
 
 
   if (String(msg->getContent()).substring(0, 6) == "light:") {
