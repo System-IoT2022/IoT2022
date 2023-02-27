@@ -14,7 +14,6 @@ LigthTask::LigthTask() {
 }
 
 rollerBlindTask::rollerBlindTask() {
-  this->Motor = new ServoMotorImpl(SERVO_MOTOR_PIN);
 }
 
 
@@ -32,9 +31,9 @@ void LigthTask::setActive(bool active) {
   Task::setActive(active);
 }
 void LigthTask::setValue(int value) {
- // Serial.println("receiving light signal");
-    this->value = value;
-  if (this->value <= 0) {
+  // Serial.println("receiving light signal");
+  this->value = value;
+  if (this->value == 0) {
     this->led->switchOff();
     this->setActive(false);
   } else {
@@ -42,31 +41,37 @@ void LigthTask::setValue(int value) {
     this->setActive(true);
   }
 }
-int LigthTask::getValue(){
+int LigthTask::getValue() {
   return this->value;
 }
 
 
 void rollerBlindTask::init(int period) {
   Task::init(period);
+  this->Motor = new ServoMotorImpl(SERVO_MOTOR_PIN);
+  this->value = 0;
 }
 
 void rollerBlindTask::execute() {
   //set roller blind
 
-  this->setActive(false);
+  //this->setActive(false);
 }
 void rollerBlindTask::setValue(int value) {
   if (value == this->value) {
+    this->Motor->off();
     this->setActive(false);
   } else {
     this->value = value;
     this->setActive(true);
+    this->Motor->on();
+    this->Motor->setPosition(value);
+    //delay(50);
   }
 }
 void rollerBlindTask::setActive(bool active) {
   Task::setActive(active);
 }
-int rollerBlindTask::getValue(){
+int rollerBlindTask::getValue() {
   return this->value;
 }

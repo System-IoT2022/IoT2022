@@ -28,8 +28,8 @@ void TaskController::init(int period) {
   this->addTask(motor);
   motor->init(0);
 
-    MsgService.init();
-    msgServiceBT.init();
+  MsgService.init();
+  msgServiceBT.init();
 }
 
 void TaskController::execute() {
@@ -38,8 +38,7 @@ void TaskController::execute() {
   if (MsgService.isMsgAvailable()) {
     //serial msg
     msg = MsgService.receiveMsg();
-   // this->taskList[0]->setValue(255);
-   
+    // this->taskList[0]->setValue(255);
   }
   //get message from bluetooth and serial
   if (msgServiceBT.isMsgAvailable()) {
@@ -51,24 +50,22 @@ void TaskController::execute() {
 
   if (String(msg->getContent()).substring(0, 6) == "light:") {
     int val = String(msg->getContent()).substring(6).toInt();
-   // Serial.println(val);
+    // Serial.println(val);
     val = max(val, 0);
     val = min(val, 1);
     /* NOT TO FORGET: message deallocation */
     this->taskList[0]->setValue(val);
-  } else {
-    if (String(msg->getContent()).substring(0, 6) == "servo:") {
-      int val = String(msg->getContent()).substring(6).toInt();
-      val = max(val, 0);
-      val = min(val, 180);
-      this->taskList[1]->setValue(val);
-    }
+  } else if (String(msg->getContent()).substring(0, 6) == "servo:") {
+    int val = String(msg->getContent()).substring(6).toInt();
+    val = max(val, 0);
+    val = min(val, 180);
+    this->taskList[1]->setValue(val);
   }
   if (String(msg->getContent()) == "config") {
-    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + " roller:" +String(this->taskList[1]->getValue()));
+    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + " roller:" + String(this->taskList[1]->getValue()));
   }
-  if(msg!=NULL)
-  delete msg;
+  if (msg != NULL)
+    delete msg;
   return;
 }
 Task** TaskController::getTask() {
