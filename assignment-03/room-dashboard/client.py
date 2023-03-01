@@ -13,7 +13,7 @@ class MsgClient:
             s.sendall(message.encode())
             print(f"Sent message: {message}")
             receivedMsg = s.recv(1024).decode()
-            print(f"Received message : {receivedMsg}")
+            print(f"Received message : {receivedMsg}\n")
             return receivedMsg
 
 msgClient = MsgClient(PORT, socket.gethostname())
