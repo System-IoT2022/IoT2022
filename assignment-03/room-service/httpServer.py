@@ -32,31 +32,33 @@ def getData():
    return json.dumps(lines)
 
 def response(msg, client):
+   print(msg)
    if msg == '0':
       print("sending historical lighting data")
       client.sendall(bytes(getData(), encoding="utf-8"))
-   if msg == '1':
-      lightState = msg.split(' ')[1]
-      if lightState == 'on':
-         print("sending light on")
-         lightOn()
-      if lightState == 'off':
-         print("sending light off")
-         lightOff()
-   if msg == '2':
-      rollerBlindsDegree = msg.split(' ')[1]
-      setRollerBlindsWithDegree(rollerBlindsDegree)
-      print(f"sending roller blinds degree: {rollerBlindsDegree}")
+   else:
+      option = msg.split(' ')[0]
+      if option == '1':
+         lightState = msg.split(' ')[1]
+         if lightState == 'on':
+            print("sending light on")
+            lightOn()
+         if lightState == 'off':
+            print("sending light off")
+            lightOff()
+      if option == '2':
+         rollerBlindsDegree = msg.split(' ')[1]
+         setRollerBlindsWithDegree(rollerBlindsDegree)
+         print(f"sending roller blinds degree: {rollerBlindsDegree}")
 
 
 def serverStart():
    c, addr = s.accept()     # Establish connection with client.
-   msg = c.recv(1024)
+   msg = c.recv(1024).decode("utf-8")
    response(msg, c)
    c.close()                # Close the connection
 
 if __name__ == '__main__':
    while True:
       serverStart()
-      time.sleep(1)
       

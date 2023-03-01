@@ -37,7 +37,7 @@ def createChart(chartData):
 def createFigure(charData):
      go.FigureWidget(go.Scatter(x=chartData['x'], y=chartData['y']))
 
-chart = createChart(chartData)
+
 
 def buildGui(page: ft.page):      
         btn0 = ft.ElevatedButton("switch on")
@@ -46,24 +46,11 @@ def buildGui(page: ft.page):
         slider = ft.Slider(min=0, max=100, divisions=10, rotate=1.57) 
         text0= ft.Text("Light")
         text1=ft.Text("Curtain")
-
-        def update_graph_callback(widget):
-            # Here you would define the code to update the graph
-            global chart
-            chartData = msgClient.send_message('0')
-            chartData = parseMessage2(chartData)
-            chartData = {'x':[1,2,3], 'y':[2,3,4]}
-            print(chartData)
-            chart.figure = createFigure(chartData)
-            chart.update()
-            page.update()
-            print("graph updated")
-    
-        btnUpdate.on_click = update_graph_callback
         
-        iconLight= ft.Icon(name=ft.icons.LIGHTBULB_OUTLINED, color=ft.colors.YELLOW)
-        page.add(
-            ft.Row(
+        chart = createChart(chartData)
+        
+        def getTheWholeGui(chart):
+            return ft.Row(
             [        
                 ft.Column(
                 [      
@@ -94,6 +81,38 @@ def buildGui(page: ft.page):
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             )
+        def updateChart():
+            # Here you would define the code to update the graph
+            nonlocal chart
+            nonlocal myGUI
+            page.remove(myGUI)
+            chartData = msgClient.send_message('0')
+            chartData = parseMessage2(chartData)
+            #chartData = {'x':["1","2","3"], 'y':["2","3","4"]}
+            chart = createChart(chartData)
+            myGUI = getTheWholeGui(chart)
+            page.add(myGUI)
+            print("graph updated")
+
+        def update_graph_callback(widget):
+           updateChart()
+
+        def update_lightOn_callback(widget):
+            msgClient.send_message('1 on')
+            update_graph_callback(None)
+
+        def update_lightOff_callback(widget):
+            msgClient.send_message('1 off')
+            update_graph_callback(None)
+    
+        btnUpdate.on_click = update_graph_callback
+        btn0.on_click = update_lightOn_callback
+        btn1.on_click = update_lightOff_callback
+
+        iconLight= ft.Icon(name=ft.icons.LIGHTBULB_OUTLINED, color=ft.colors.YELLOW)
+        myGUI = getTheWholeGui(chart)
+        page.add(
+           myGUI
             )
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ def getDateHourMinuteSecondNow():
 # the lightState can be 'on' or 'off'
 def getTimeLightStatePair(lightState):
     key = getDateHourMinuteSecondNow()
-    return f'{key}:{lightState}'
+    return f'{key} {lightState}'
 
 
 def lightOn():
