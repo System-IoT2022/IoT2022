@@ -51,8 +51,7 @@ class ConnectThread extends Thread {
         }
 
         // The connection attempt succeeded. Perform work associated with
-        // the connection in a separate thread.
-        BluetoothComm(mmSocket);
+        // the connection in a separate thread
     }
 
     // Closes the client socket and causes the thread to finish.

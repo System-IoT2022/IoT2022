@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
@@ -23,6 +24,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
+import android.widget.Toast;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -44,11 +47,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean ledState;
     //bluetooth vars
     private BluetoothAdapter btAdapter;
+    private BluetoothDevice btDevice;
     Set<BluetoothDevice> pairedDevices;
     private ConnectThread connectionThread;
     private BluetoothSocket btSocket;
-
-
 
 
     private OutputStream bluetoothOutputStream;
@@ -68,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
         sw = (Switch) findViewById(R.id.switch1);
         remoteButton = (Button) findViewById(R.id.remoteButton);
+
 //        sw.setOnClickListener(new View.OnClickListener() {
 //            public void onClick(View v) {
 //                // your handler code here
@@ -76,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
     }
+
     private void sendMessage(String message) {
         new Thread(() -> {
             try {
@@ -88,34 +92,74 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    @SuppressLint("MissingPermission")
+
     @Override
     protected void onStart() {
         super.onStart();
         Intent intent = getIntent();
+        checkPermissionAndEnableBluetooth();
+        //cehck permission
+/*
+        if (ContextCompat.checkSelfPermission(
+                getApplicationContext(), Manifest.permission.BLUETOOTH) ==
+                PackageManager.PERMISSION_GRANTED) {
 
-        //get adapter
-        BluetoothDevice bluetoothDevice = intent.getParcelableExtra(X_BLUETOOTH_DEVICE_EXTRA);
-        btAdapter = getSystemService(BluetoothManager.class).getAdapter();
-        //check bt availability
-        if (!btAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+
+
+            //get adapter
+            btDevice = intent.getParcelableExtra(X_BLUETOOTH_DEVICE_EXTRA);
+            btAdapter = getSystemService(BluetoothManager.class).getAdapter();
+            //check bt availability
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+                Toast.makeText(this, "bluetooth not supported", Toast.LENGTH_SHORT).show();
+                finish();
+            }        //check for associated device by name
+            try {
+                pairedDevices = btAdapter.getBondedDevices();
+            } catch (Error e) {
+                logMessage(e.getMessage());
+            }
+
+            if (pairedDevices.size() > 0) {
+                boolean found=false;
+                // There are paired devices. Get the name and address of each paired device.
+                for (BluetoothDevice device : pairedDevices) {
+                    if (device.getName() == "HC-05"){
+                        found=true;
+                    }
+                }
+                if(found){
+                    Toast.makeText(this, "trovato", Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(this, "giustissimoooooooooooo", Toast.LENGTH_SHORT).show();
+                }
+            }
+            // pairedDevices = btAdapter.getBondedDevices();
+            // BluetoothDevice btArduino = checkBtPaired("HC-05");
+            //Toast.makeText(this, btArduino.getAddress(), Toast.LENGTH_SHORT).show();
+//        if(btArduino==null){
+//            logMessage("bluetooth non associato");
+//            return;
+//        }
+//        Log.i(C.TAG, "Connecting to " + bluetoothDevice.getName());
+//        connectionThread = new ConnectThread(btArduino, btAdapter);
+//        connectionThread.start();
+
+        }else{
+            ActivityCompat.requestPermissions(
+                    this, new String[] {
+                            Manifest.permission.BLUETOOTH
+                    },
+                    10);
         }
-        //check for associated device by name
-        pairedDevices = btAdapter.getBondedDevices();
-        BluetoothDevice btArduino = checkBtPaired("HC-05");
-        if(btArduino==null){
-            logMessage("bluetooth non associato");
-            return;
-        }
-        Log.i(C.TAG, "Connecting to " + bluetoothDevice.getName());
-        connectionThread = new ConnectThread(btArduino, btAdapter, btSocket);
-        connectionThread.start();
+
+ */
+
 
     }
 
-    @SuppressLint("MissingPermission")
+
+
     private BluetoothDevice checkBtPaired(String devName){
         if (pairedDevices.size() > 0) {
             // There are paired devices. Get the name and address of each paired device.
