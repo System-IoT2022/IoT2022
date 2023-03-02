@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "Taskcontroller.h"
 #include "Scheduler.h"
 #include "Config.h"
@@ -5,6 +6,7 @@
 #include "MsgService.h"
 #include "MsgServiceBT.h"
 
+//#include "MemoryUsage.h"
 bool TaskController::addTask(RoomTask* task) {
   if (this->nTasks < MAX_TASKS - 1) {
     if (Scheduler::addTask(task)) {
@@ -28,38 +30,53 @@ void TaskController::init(int period) {
   motor->init(0);
 
   MsgService.init();
+  msgServiceBT.init();
 }
+
 void TaskController::execute() {
-  Msg* msg;
+
+  /* 
+  DECOMENT ONLY TO DEBUG => REQUIRE MEMORY USAGE LIBRARY
+  Serial.print("Free memory: ");
+  Serial.println(mu_freeRam());
+  */
+  String message = "";
   if (MsgService.isMsgAvailable()) {
     //serial msg
-    msg = MsgService.receiveMsg();
+    Msg* msg = MsgService.receiveMsg();
+    message = msg->getContent();
+    delete msg;
   }
   //get message from bluetooth and serial
   if (msgServiceBT.isMsgAvailable()) {
     //bluetooth user msg
-    msg = msgServiceBT.receiveMsg();
-    MsgService.sendMsg(msg->getContent());
+    Msg* msg = msgServiceBT.receiveMsg();
+    message = msg->getContent();
+    MsgService.sendMsg(message);
+    delete msg;
   }
-  if (String(msg->getContent()).substring(0, 6) == "light:") {
-    int val = String(msg->getContent()).substring(6).toInt();
-    val = max(val, 0);
-    val = min(val, 255);
-    /* NOT TO FORGET: message deallocation */
-    this->taskList[0]->setValue(val);
-  } else {
-    if (String(msg->getContent()).substring(0, 6) == "servo:") {
-      int val = String(msg->getContent()).substring(6).toInt();
+
+
+  if (message != "") {
+    Serial.println("why?");
+    if (String(message).substring(0, 6) == "light:") {
+      int val = String(message).substring(6).toInt();
+      // Serial.println(val);
+      val = max(val, 0);
+      val = min(val, 1);
+      /* NOT TO FORGET: message deallocation */
+      this->taskList[0]->setValue(val);
+    } else if (String(message).substring(0, 6) == "servo:") {
+      int val = String(message).substring(6).toInt();
       val = max(val, 0);
       val = min(val, 180);
       this->taskList[1]->setValue(val);
     }
+    if (String(message) == "config") {
+      MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + " roller:" + String(this->taskList[1]->getValue()));
+    }
   }
-  if (String(msg->getContent()) == "config") {
-    MsgService.sendMsg("light:" + String(this->taskList[0]->getValue()) + " roller:" +String(this->taskList[1]->getValue()));
-  }
-  if(msg!=NULL)
-  delete msg;
+
   return;
 }
 Task** TaskController::getTask() {

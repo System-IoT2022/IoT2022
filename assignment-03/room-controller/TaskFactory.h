@@ -21,7 +21,7 @@ public:
 
 class rollerBlindTask : public RoomTask {
 private:
-  ServoMotor* Motor;
+  ServoMotor * Motor;
 public:
   rollerBlindTask();
   void init(int period);
