@@ -62,4 +62,8 @@ class ConnectThread extends Thread {
             Log.e(C.TAG, "Could not close the client socket", e);
         }
     }
+
+    public BluetoothSocket getSocket(){
+        return this.mmSocket;
+    }
 }

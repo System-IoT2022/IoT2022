@@ -7,6 +7,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -49,18 +51,17 @@ public class MainActivity extends AppCompatActivity {
     private boolean ledState;
     //bluetooth vars
     private BluetoothAdapter btAdapter;
-    private BluetoothDevice btDevice;
-    private ConnectThread connectionThread;
-    private BluetoothSocket btSocket;
     private List<BluetoothDevice> scannedDevices = new ArrayList<>();
     private List<String> scannedNameList = new ArrayList<>();
-
+    private List<BluetoothDevice> pairedDevices = new ArrayList<>();
+    private List<String> pairedNameList = new ArrayList<>();
+    private ConnectThread btConnection;
+    private BluetoothDevice arduinoDev;
+    private BluetoothSocket arduinoSocket;
 
     private ArrayAdapter<String> scannedListAdapter;
 
     private boolean bluetoothEnabled = false;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
     @Override
     protected void onStart() {
         btAdapter = getSystemService(BluetoothManager.class).getAdapter();
@@ -81,24 +81,10 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onStart();
         checkPermissionAndEnableBluetooth();
+        checkPairedDevices();
+        connectArduino("HC-05");
 
     }
-
-
-
-    private BluetoothDevice checkBtPaired(String devName){
-        if (pairedDevices.size() > 0) {
-            // There are paired devices. Get the name and address of each paired device.
-            for (BluetoothDevice device : pairedDevices) {
-               if(btDevice.getName() == devName) {
-                   return device;
-               }
-            }
-        }
-        return null;
-    }
-
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -121,34 +107,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        connectionThread.cancel();
+        btConnection.cancel();
     }
-
-    private void startScanning() {
-        //ask the scanning permission when needed
-        String permission = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ? Manifest.permission.BLUETOOTH_ADMIN : Manifest.permission.BLUETOOTH_SCAN;
-        int reqID = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ? REQUEST_PERMISSION_ADMIN : REQUEST_PERMISSION_SCAN;
-        if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{permission}, reqID);
-            return;
-        } else {
-            //empty lists
-            if(!btAdapter.isDiscovering()) {
-                checkPermissionAndEnableBluetooth();
-                scannedDevices.clear();
-                scannedNameList.clear();
-                runOnUiThread(() -> scannedListAdapter.notifyDataSetChanged());
-                //debounce to avoid multiple discoveries
-                btAdapter.startDiscovery();
-            } else {
-                displayError("Already scanning! Wait please");
-            }
-        }
-    }
-
-
     /* ================== PERMISSION MANAGEMENT ========================== */
-
     private void checkPermissionAndEnableBluetooth(){
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S){
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
@@ -245,7 +206,52 @@ public class MainActivity extends AppCompatActivity {
         Log.i(C.TAG, message);
     }
 
-
     //* ============== BLUETOOTH CONNECTION =======================*/
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                onBluetoothDeviceFound(device);
+            }
+        }
+    };
+    @SuppressLint("MissingPermission")
+    private void onBluetoothDeviceFound(BluetoothDevice device) {
+        this.scannedDevices.add(device);
+        if(device.getName()!= null){
+            this.scannedNameList.add(device.getName());
+        } else {
+            this.scannedNameList.add(device.getAddress());
+        }
+    }
 
+    @SuppressLint("MissingPermission")
+    private void checkPairedDevices(){
+        pairedDevices.clear();
+        pairedNameList.clear();
+        pairedDevices.addAll(btAdapter.getBondedDevices());
+        if (pairedDevices.size() > 0) {
+            // There are paired devices. Get the name and address of each paired device.
+            for (BluetoothDevice device : pairedDevices) {
+                if(device.getName()!= null){
+                    this.pairedNameList.add(device.getName());
+                } else {
+                    this.pairedNameList.add(device.getAddress());
+                }
+            }
+        }
+    }
+    @SuppressLint("MissingPermission")
+    private void connectArduino(String name){
+
+        for(BluetoothDevice dev : pairedDevices){
+            if(dev.getName().equals(name)){
+                arduinoDev=dev;
+            }
+        }
+        btConnection = new ConnectThread(arduinoDev, btAdapter);
+        btConnection.run();
+        arduinoSocket = btConnection.getSocket();
+    }
 }
