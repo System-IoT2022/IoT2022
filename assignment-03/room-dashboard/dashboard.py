@@ -43,7 +43,7 @@ def buildGui(page: ft.page):
         btn0 = ft.ElevatedButton("switch on")
         btn1 = ft.ElevatedButton("switch off")
         btnUpdate = ft.ElevatedButton("update graph")
-        slider = ft.Slider(min=0, max=100, divisions=10, rotate=1.57) 
+        slider = ft.Slider(min=0, max=180, divisions=10, rotate=1.57) 
         text0= ft.Text("Light")
         text1=ft.Text("Curtain")
         
@@ -88,7 +88,6 @@ def buildGui(page: ft.page):
             page.remove(myGUI)
             chartData = msgClient.send_message('0')
             chartData = parseMessage2(chartData)
-            #chartData = {'x':["1","2","3"], 'y':["2","3","4"]}
             chart = createChart(chartData)
             myGUI = getTheWholeGui(chart)
             page.add(myGUI)
@@ -104,10 +103,14 @@ def buildGui(page: ft.page):
         def update_lightOff_callback(widget):
             msgClient.send_message('1 off')
             update_graph_callback(None)
+
+        def update_slider_callback(widget):
+             msgClient.send_message(f'2 {slider.value}')
     
         btnUpdate.on_click = update_graph_callback
         btn0.on_click = update_lightOn_callback
         btn1.on_click = update_lightOff_callback
+        slider.on_change = update_slider_callback
 
         iconLight= ft.Icon(name=ft.icons.LIGHTBULB_OUTLINED, color=ft.colors.YELLOW)
         myGUI = getTheWholeGui(chart)
