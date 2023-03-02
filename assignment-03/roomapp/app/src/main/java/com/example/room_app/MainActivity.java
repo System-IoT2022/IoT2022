@@ -26,6 +26,8 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -48,13 +50,8 @@ public class MainActivity extends AppCompatActivity {
     //bluetooth vars
     private BluetoothAdapter btAdapter;
     private BluetoothDevice btDevice;
-    Set<BluetoothDevice> pairedDevices;
     private ConnectThread connectionThread;
     private BluetoothSocket btSocket;
-
-
-    private OutputStream bluetoothOutputStream;
-
     private List<BluetoothDevice> scannedDevices = new ArrayList<>();
     private List<String> scannedNameList = new ArrayList<>();
 
@@ -62,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> scannedListAdapter;
 
     private boolean bluetoothEnabled = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,90 +69,18 @@ public class MainActivity extends AppCompatActivity {
         sw = (Switch) findViewById(R.id.switch1);
         remoteButton = (Button) findViewById(R.id.remoteButton);
 
-//        sw.setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                // your handler code here
-//                sendMessage("changeLight");
-//            }
-//        });
 
     }
-
-    private void sendMessage(String message) {
-        new Thread(() -> {
-            try {
-                bluetoothOutputStream.write(message.getBytes(StandardCharsets.UTF_8));
-                ledState = !ledState;
-                //runOnUiThread(() -> remoteButton.setBackgroundColor(ledState? Color.GREEN : Color.RED));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
 
     @Override
     protected void onStart() {
-        super.onStart();
-        Intent intent = getIntent();
-        checkPermissionAndEnableBluetooth();
-        //cehck permission
-/*
-        if (ContextCompat.checkSelfPermission(
-                getApplicationContext(), Manifest.permission.BLUETOOTH) ==
-                PackageManager.PERMISSION_GRANTED) {
-
-
-
-            //get adapter
-            btDevice = intent.getParcelableExtra(X_BLUETOOTH_DEVICE_EXTRA);
-            btAdapter = getSystemService(BluetoothManager.class).getAdapter();
-            //check bt availability
-            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
-                Toast.makeText(this, "bluetooth not supported", Toast.LENGTH_SHORT).show();
-                finish();
-            }        //check for associated device by name
-            try {
-                pairedDevices = btAdapter.getBondedDevices();
-            } catch (Error e) {
-                logMessage(e.getMessage());
-            }
-
-            if (pairedDevices.size() > 0) {
-                boolean found=false;
-                // There are paired devices. Get the name and address of each paired device.
-                for (BluetoothDevice device : pairedDevices) {
-                    if (device.getName() == "HC-05"){
-                        found=true;
-                    }
-                }
-                if(found){
-                    Toast.makeText(this, "trovato", Toast.LENGTH_SHORT).show();
-                }else{
-                    Toast.makeText(this, "giustissimoooooooooooo", Toast.LENGTH_SHORT).show();
-                }
-            }
-            // pairedDevices = btAdapter.getBondedDevices();
-            // BluetoothDevice btArduino = checkBtPaired("HC-05");
-            //Toast.makeText(this, btArduino.getAddress(), Toast.LENGTH_SHORT).show();
-//        if(btArduino==null){
-//            logMessage("bluetooth non associato");
-//            return;
-//        }
-//        Log.i(C.TAG, "Connecting to " + bluetoothDevice.getName());
-//        connectionThread = new ConnectThread(btArduino, btAdapter);
-//        connectionThread.start();
-
-        }else{
-            ActivityCompat.requestPermissions(
-                    this, new String[] {
-                            Manifest.permission.BLUETOOTH
-                    },
-                    10);
+        btAdapter = getSystemService(BluetoothManager.class).getAdapter();
+        if (btAdapter == null) {
+            displayError("Bluetooth not supported!");
+            finish();
         }
-
- */
-
+        super.onStart();
+        checkPermissionAndEnableBluetooth();
 
     }
 
@@ -164,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         if (pairedDevices.size() > 0) {
             // There are paired devices. Get the name and address of each paired device.
             for (BluetoothDevice device : pairedDevices) {
-               if(device.getName() == devName) {
+               if(btDevice.getName() == devName) {
                    return device;
                }
             }
@@ -172,20 +98,26 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private void manageConnectedSocket(BluetoothSocket socket) {
-        try {
-            bluetoothOutputStream = socket.getOutputStream();
-            Log.i(C.TAG, "Connection successful!");
-        } catch (IOException e) {
-            Log.e(C.TAG, "Error occurred when creating output stream", e);
-        }
-        runOnUiThread(() -> {
-            remoteButton.setEnabled(true);
-            remoteButton.setBackgroundColor(Color.RED);
-            sw.setChecked(false);
-        });
-    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+                //do not ask for permissions on resume otherwise you will get in a loop!
+                displayError("Please grant legacy permissions first");
+            }else{
+                //  todo:check arduino connected
+            }
+        } else {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                //do not ask for permissions on resume otherwise you will get in a loop!
+                displayError("Please grant permissions first");
+            } else{
+                //  todo:check arduino connected
+            }
+        }
+    }
     @Override
     protected void onStop() {
         super.onStop();
@@ -219,27 +151,30 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkPermissionAndEnableBluetooth(){
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S){
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
-                    || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
+                    || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
             ) {
-                requestPermissions(new String[]{android.Manifest.permission.BLUETOOTH, android.Manifest.permission.ACCESS_FINE_LOCATION}, LEGACY_REQUEST_PERMISSION_BLUETOOTH);
+                requestPermissions(new String[]{Manifest.permission.BLUETOOTH, Manifest.permission.ACCESS_FINE_LOCATION}, LEGACY_REQUEST_PERMISSION_BLUETOOTH);
             } else {
                 if (!btAdapter.isEnabled()) {
                     Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    //noinspection deprecation
                     startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
                 } else {
-                    this.sw.setEnabled(true);
+                    //this.remoteButton.setEnabled(true);
+
                 }
             }
         } else {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_PERMISSION_CONNECT);
             } else {
                 if (!btAdapter.isEnabled()) {
                     Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    //noinspection deprecation
                     startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
                 } else {
-                    this.sw.setEnabled(true);
+                    //this.remoteButton.setEnabled(true);
                 }
             }
         }
@@ -251,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_PERMISSION_CONNECT:
+                Log.i(C.TAG, "REQUEST_PERMISSION_CONNECT");
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //go back to enabling bluetooth
@@ -262,15 +198,19 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case REQUEST_PERMISSION_SCAN:
+                Log.i(C.TAG, "scan");
+                break;
             case REQUEST_PERMISSION_ADMIN:
+                Log.i(C.TAG, "admin");
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //go back at scanning after receiving the permission
-                    startScanning();
+                    //startScanning();
                 } else {
                     displayError( "You need to grant bluetooth scan permission to use this feature");
                 }
                 break;
             case LEGACY_REQUEST_PERMISSION_BLUETOOTH:
+                Log.i(C.TAG, "bluetooth");
                 if(grantResults.length > 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
                     logMessage("legacy ok");
                 checkPermissionAndEnableBluetooth();
@@ -304,5 +244,8 @@ public class MainActivity extends AppCompatActivity {
     private void logMessage(String message){
         Log.i(C.TAG, message);
     }
+
+
+    //* ============== BLUETOOTH CONNECTION =======================*/
 
 }
