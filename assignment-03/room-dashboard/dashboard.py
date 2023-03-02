@@ -117,6 +117,7 @@ def buildGui(page: ft.page):
         page.add(
            myGUI
             )
+        
 
 if __name__ == '__main__':
       ft.app(target=buildGui)
