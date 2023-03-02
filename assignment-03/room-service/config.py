@@ -41,6 +41,9 @@ def rollerBlindsUp():
 def rollerBlindsDown():
     serialComm.sendMsg(ROLLER_BLINDS_DOWN)
 
+def rollerBlindMove(value):
+    serialComm.sendMsg(setRollerBlindsWithDegree(value))
+
 def tooDark(brightness):
     return float(brightness) < BRIGHTNESS_THRESHOLD
 
