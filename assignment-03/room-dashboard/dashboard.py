@@ -47,6 +47,8 @@ def buildGui(page: ft.page):
         text0= ft.Text("Light")
         text1=ft.Text("Curtain")
         
+        chartData = msgClient.send_message('0')
+        chartData = parseMessage2(chartData)
         chart = createChart(chartData)
         
         def getTheWholeGui(chart):
