@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -16,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -60,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothDevice arduinoDev;
     private BluetoothSocket arduinoSocket;
 
+    private BluetoothComm serial;
+
     private boolean bluetoothEnabled = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +73,21 @@ public class MainActivity extends AppCompatActivity {
         sw = (Switch) findViewById(R.id.switch1);
         remoteButton = (Button) findViewById(R.id.remoteButton);
 
+        remoteButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(arduinoSocket != null){
+                    //connection successfull
+                    bluetoothEnabled = true;
+                    try {
+                        arduinoSocket.getOutputStream().write(("light \n").getBytes(StandardCharsets.UTF_8));
+                    }catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //serial.sendMessage("light");
+                }
+            }
+        });
 
     }
     @Override
@@ -81,7 +100,8 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         checkPermissionAndEnableBluetooth();
         checkPairedDevices();
-        connectArduino("HC-05");
+        connectArduino("isi00");
+        //verify correctness of connection
 
     }
     @Override
@@ -243,14 +263,16 @@ public class MainActivity extends AppCompatActivity {
     }
     @SuppressLint("MissingPermission")
     private void connectArduino(String name){
-
+        Log.i(C.TAG, "CONNECTING");
         for(BluetoothDevice dev : pairedDevices){
             if(dev.getName().equals(name)){
                 arduinoDev=dev;
             }
         }
+        Log.i(C.TAG, "BT_FOUND-ARDUINO" + arduinoDev);
         btConnection = new ConnectThread(arduinoDev, btAdapter);
         btConnection.run();
         arduinoSocket = btConnection.getSocket();
+        //serial = new BluetoothComm( btConnection.getSocket());
     }
 }
