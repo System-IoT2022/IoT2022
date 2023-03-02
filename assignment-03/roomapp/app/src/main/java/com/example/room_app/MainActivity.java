@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private Switch sw;
     private Button remoteButton;
     private boolean ledState;
+
     //bluetooth vars
     private BluetoothAdapter btAdapter;
     private List<BluetoothDevice> scannedDevices = new ArrayList<>();
@@ -58,8 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private ConnectThread btConnection;
     private BluetoothDevice arduinoDev;
     private BluetoothSocket arduinoSocket;
-
-    private ArrayAdapter<String> scannedListAdapter;
 
     private boolean bluetoothEnabled = false;
     @Override
