@@ -25,11 +25,11 @@ public class BluetoothComm {
 
     }
 
-    private void sendMessage(String message) {
+    public void sendMessage(String message) {
         new Thread(() -> {
             try {
                 bluetoothOutputStream.write(message.getBytes(StandardCharsets.UTF_8));
-                ledState = !ledState;
+                //ledState = !ledState;
                 //runOnUiThread(() -> remoteButton.setBackgroundColor(ledState? Color.GREEN : Color.RED));
             } catch (IOException e) {
                 e.printStackTrace();
