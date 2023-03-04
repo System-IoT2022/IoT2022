@@ -4,23 +4,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Switch;
 
 import android.annotation.SuppressLint;
@@ -28,16 +23,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
-import android.widget.Toast;
-
-import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,7 +53,10 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothDevice arduinoDev;
     private BluetoothSocket arduinoSocket;
 
-    private BluetoothComm serial;
+
+    private OutputStream btOutStream;
+
+    private String message = "light:1";
 
     private boolean bluetoothEnabled = false;
     @Override
@@ -74,21 +68,23 @@ public class MainActivity extends AppCompatActivity {
         remoteButton = (Button) findViewById(R.id.remoteButton);
 
         remoteButton.setOnClickListener(new OnClickListener() {
+            @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                if(arduinoSocket != null){
-                    //connection successfull
-                    bluetoothEnabled = true;
-                    try {
-                        arduinoSocket.getOutputStream().write(("light \n").getBytes(StandardCharsets.UTF_8));
-                    }catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //serial.sendMessage("light");
+                //serial.sendMessage(message);
+                try {
+                    btOutStream = arduinoSocket.getOutputStream();
+                    Log.i(C.TAG, "Connection successful!");
+                    Log.i(C.TAG, (arduinoSocket.isConnected()?"true":"false"));
+                    Log.i(C.TAG, message);
+                    btOutStream.write(message.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    Log.e(C.TAG, "Error occurred when creating output stream", e);
+                    checkPairedDevices();
+                    connectArduino("HC-05");
                 }
             }
         });
-
     }
     @Override
     protected void onStart() {
@@ -269,10 +265,23 @@ public class MainActivity extends AppCompatActivity {
                 arduinoDev=dev;
             }
         }
+
         Log.i(C.TAG, "BT_FOUND-ARDUINO" + arduinoDev);
         btConnection = new ConnectThread(arduinoDev, btAdapter);
         btConnection.run();
         arduinoSocket = btConnection.getSocket();
-        //serial = new BluetoothComm( btConnection.getSocket());
+
+    }
+    private void sendMessage() {
+        new Thread(() -> {
+            try {
+                String message = "light:1 \n";
+                //String ledMessage = ledState ? "on" : "off";
+                //String message = ledMessage + "/" + sliderState + "\n";
+                btOutStream.write(message.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 }
