@@ -48,7 +48,8 @@ def response(msg, client):
             lightOff()
       if option == '2':
          rollerBlindsDegree = msg.split(' ')[1]
-         setRollerBlindsWithDegree(rollerBlindsDegree)
+         rollerBlindsDegree = int(float(rollerBlindsDegree))
+         rollerBlindMove(rollerBlindsDegree)
          print(f"sending roller blinds degree: {rollerBlindsDegree}")
 
 
