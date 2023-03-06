@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Switch;
 
 import android.annotation.SuppressLint;
@@ -23,6 +24,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
+
+import com.google.android.material.slider.Slider;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,9 +42,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int LEGACY_REQUEST_PERMISSION_BLUETOOTH = 555;
     private static final int REQUEST_PERMISSION_ADMIN = 556;
     public static final String X_BLUETOOTH_DEVICE_EXTRA = "X_BLUETOOTH_DEVICE_EXTRA";
-    private Switch sw;
+    private final  String BT_NAME = "HC-05";
+
     private Button remoteButton;
-    private boolean ledState;
+    private SeekBar curtainSlider;
+    private boolean lightOn;
+
 
     //bluetooth vars
     private BluetoothAdapter btAdapter;
@@ -52,26 +58,33 @@ public class MainActivity extends AppCompatActivity {
     private ConnectThread btConnection;
     private BluetoothDevice arduinoDev;
     private BluetoothSocket arduinoSocket;
-
-
     private OutputStream btOutStream;
+    private ConnectThread serialBT;
 
-    private String message = "light:1";
+
 
     private boolean bluetoothEnabled = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        lightOn=false;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sw = (Switch) findViewById(R.id.switch1);
-        remoteButton = (Button) findViewById(R.id.remoteButton);
 
+        remoteButton = (Button) findViewById(R.id.remoteButton);
         remoteButton.setOnClickListener(new OnClickListener() {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
+                String message="";
                 //serial.sendMessage(message);
+                if(lightOn){
+                  message = "light:0 \n";
+                    lightOn=false;
+                }else{
+                     message = "light:1 \n";
+                    lightOn=true;
+                }
                 try {
                     btOutStream = arduinoSocket.getOutputStream();
                     Log.i(C.TAG, "Connection successful!");
@@ -81,10 +94,39 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     Log.e(C.TAG, "Error occurred when creating output stream", e);
                     checkPairedDevices();
-                    connectArduino("HC-05");
+                    connectArduino(BT_NAME);
                 }
             }
         });
+
+        curtainSlider = (SeekBar) findViewById(R.id.curtainBar);
+       curtainSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+           @Override
+           public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+           }
+
+           @Override
+           public void onStartTrackingTouch(SeekBar seekBar) {
+
+           }
+
+           @Override
+           public void onStopTrackingTouch(SeekBar seekBar) {
+               try {
+                   String message = "curtain:" + curtainSlider.getProgress() + "\n";
+                   btOutStream = arduinoSocket.getOutputStream();
+                   Log.i(C.TAG, "Connection successful!");
+                   Log.i(C.TAG, (arduinoSocket.isConnected()?"true":"false"));
+                   Log.i(C.TAG, message);
+                   btOutStream.write(message.getBytes(StandardCharsets.UTF_8));
+               } catch (IOException e) {
+                   Log.e(C.TAG, "Error occurred when creating output stream", e);
+                   checkPairedDevices();
+                   connectArduino(BT_NAME);
+               }
+           }
+       });
     }
     @Override
     protected void onStart() {
@@ -270,18 +312,5 @@ public class MainActivity extends AppCompatActivity {
         btConnection = new ConnectThread(arduinoDev, btAdapter);
         btConnection.run();
         arduinoSocket = btConnection.getSocket();
-
-    }
-    private void sendMessage() {
-        new Thread(() -> {
-            try {
-                String message = "light:1 \n";
-                //String ledMessage = ledState ? "on" : "off";
-                //String message = ledMessage + "/" + sliderState + "\n";
-                btOutStream.write(message.getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 }

@@ -24,13 +24,13 @@ public class ConnectedThread {
         // ... (Add other message types here as needed.)
     }
 
-    private class serialBT extends Thread {
+    public class serialBT extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
         private byte[] mmBuffer; // mmBuffer store for the stream
 
-        public serialBT(BluetoothSocket socket) {
+        private serialBT(BluetoothSocket socket) {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
