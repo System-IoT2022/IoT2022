@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int LEGACY_REQUEST_PERMISSION_BLUETOOTH = 555;
     private static final int REQUEST_PERMISSION_ADMIN = 556;
     public static final String X_BLUETOOTH_DEVICE_EXTRA = "X_BLUETOOTH_DEVICE_EXTRA";
-    private final  String BT_NAME = "HC-05";
+    private final  String BT_NAME = "isi00";
 
     private Button remoteButton;
     private SeekBar curtainSlider;
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
            @Override
            public void onStopTrackingTouch(SeekBar seekBar) {
                try {
-                   String message = "curtain:" + curtainSlider.getProgress() + "\n";
+                   String message = "servo:" + curtainSlider.getProgress() + "\n";
                    btOutStream = arduinoSocket.getOutputStream();
                    Log.i(C.TAG, "Connection successful!");
                    Log.i(C.TAG, (arduinoSocket.isConnected()?"true":"false"));
@@ -163,8 +163,13 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onStop() {
+        try {
+            btConnection.cancel();
+            arduinoSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         super.onStop();
-        btConnection.cancel();
     }
     /* ================== PERMISSION MANAGEMENT ========================== */
     private void checkPermissionAndEnableBluetooth(){
@@ -244,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if(resultCode == RESULT_OK) {
-                    this.sw.setEnabled(true);
+                    this.remoteButton.setEnabled(true);
                 } else {
                     displayError("You need to enable bluetooth to use the app");
                 }
