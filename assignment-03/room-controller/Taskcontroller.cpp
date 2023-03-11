@@ -52,6 +52,7 @@ void TaskController::execute() {
     //bluetooth user msg
     Msg* msg = msgServiceBT.receiveMsg();
     message = msg->getContent();
+    Serial.println(message);
     MsgService.sendMsg(message);
     delete msg;
   }
