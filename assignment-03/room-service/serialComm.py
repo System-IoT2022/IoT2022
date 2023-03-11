@@ -16,7 +16,7 @@ class SerialCommunication:
         time.sleep(1)
 
     def listenToMsg(self):
-        print("waiting for msg from serial line...")
+        #print("waiting for msg from serial line...")
         line = self.arduino.readline().decode().rstrip()
         return line
             
