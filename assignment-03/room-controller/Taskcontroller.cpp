@@ -59,7 +59,6 @@ void TaskController::execute() {
 
 
   if (message != "") {
-    Serial.println("why?");
     if (String(message).substring(0, 6) == "light:") {
       int val = String(message).substring(6).toInt();
       // Serial.println(val);
